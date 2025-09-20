@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(express.static(__dirname));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// OAuth2 client setup
+// OAuth2 setup
 const oAuth2Client = new google.auth.OAuth2(
   process.env.OAUTH_CLIENT_ID,
   process.env.OAUTH_CLIENT_SECRET,
@@ -23,31 +23,30 @@ const oAuth2Client = new google.auth.OAuth2(
 );
 oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 
-// Gmail API send function
-async function sendEmail({ to, subject, text }) {
-  try {
-    const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
-    const messageParts = [
-      `From: ${process.env.EMAIL_FROM}`,
-      `To: ${to}`,
-      `Subject: ${subject}`,
-      '',
-      text,
-    ];
-    const message = Buffer.from(messageParts.join('\n'))
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
+// Gmail API email sender
+async function sendEmail(to, subject, text) {
+  const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
 
-    const res = await gmail.users.messages.send({
-      userId: 'me',
-      requestBody: { raw: message },
-    });
-    console.log('📧 Email sent successfully!', res.data.id);
-  } catch (err) {
-    console.error('❌ Gmail API send error:', err);
-  }
+  // Build raw email message
+  const message = [
+    `From: ${process.env.OAUTH_USER_EMAIL}`,
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    ``,
+    text
+  ].join('\n');
+
+  // Base64 URL-safe encode
+  const encodedMessage = Buffer.from(message)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+
+  return gmail.users.messages.send({
+    userId: 'me',
+    requestBody: { raw: encodedMessage }
+  });
 }
 
 // Pages
@@ -61,18 +60,25 @@ app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
   console.log('Received submission:', { lang, name, email: email ? '[redacted]' : '', message: message ? '[redacted]' : '' });
 
-  // Log to file
+  // Save to submissions.txt
   const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
-  fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => {
-    if (err) console.error('❌ Error writing submissions.txt:', err);
-  });
+  fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => { if (err) console.error('❌ Error writing submissions.txt:', err); });
 
-  // Send email via Gmail API
-  await sendEmail({
-    to: process.env.NOTIFY_TO,
-    subject: `New message from site (${lang.toUpperCase()})`,
-    text: `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}`,
-  });
+  // Send email to all recipients
+  const recipients = process.env.NOTIFY_TO.split(',').map(e => e.trim());
+
+  try {
+    for (const to of recipients) {
+      await sendEmail(
+        to,
+        `New message from site (${lang.toUpperCase()})`,
+        `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}`
+      );
+      console.log(`📧 Email sent to ${to}`);
+    }
+  } catch (err) {
+    console.error('❌ Gmail API send error:', err);
+  }
 
   // Redirect
   if (lang === 'pt') return res.redirect('/enviado.html');
