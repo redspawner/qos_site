@@ -4710,4 +4710,20 @@ input, select, textarea {
 /* make sure other layout isn't hidden behind z-index quirks */
 #wrapper, #main, #intro { position: relative; z-index: 0; }
 
+
+/* Responsive logo */
+#intro img {
+  max-width: 80%;   /* shrink to 80% of screen width */
+  height: auto;     /* keep proportions */
+  display: block;   /* center-friendly */
+  margin: 0 auto 1rem auto; /* center horizontally, add space below */
+}
+
+@media screen and (max-width: 480px) {
+  #intro img {
+    max-width: 100%; /* on very small screens, full width */
+  }
+}
+
+		
 	}
