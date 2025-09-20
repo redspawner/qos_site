@@ -26,10 +26,9 @@ oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 
 // Nodemailer transporter
 async function createTransporter() {
-const { token } = await oAuth2Client.getAccessToken();
-if (!token) throw new Error('Failed to retrieve access token');
+  const { token } = await oAuth2Client.getAccessToken();
+  if (!token) throw new Error('Failed to retrieve OAuth2 access token');
 
-  
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -38,10 +37,11 @@ if (!token) throw new Error('Failed to retrieve access token');
       clientId: process.env.OAUTH_CLIENT_ID,
       clientSecret: process.env.OAUTH_CLIENT_SECRET,
       refreshToken: process.env.OAUTH_REFRESH_TOKEN,
-      accessToken: accessToken.token
+      accessToken: token
     }
   });
 }
+
 
 // Pages
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
