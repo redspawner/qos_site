@@ -47,8 +47,14 @@ async function sendEmail(to, subject, text) {
   });
 }
 
-// Redirect .html → extensionless
+// Redirect general .html → extensionless (except /pt/index handled below)
 app.use((req, res, next) => {
+  // Special redirect: /pt/index.html or /pt/index → /pt/
+  if (req.path === '/pt/index.html' || req.path === '/pt/index') {
+    return res.redirect(301, '/pt/');
+  }
+
+  // General redirect for other .html files
   if (req.path.endsWith('.html')) {
     const filePath = path.join(__dirname, req.path);
     if (fs.existsSync(filePath)) {
@@ -56,6 +62,7 @@ app.use((req, res, next) => {
       return res.redirect(301, clean || '/');
     }
   }
+
   next();
 });
 
@@ -69,7 +76,17 @@ app.get(/.*/, (req, res, next) => {
     return next();
   }
 
-  // Map path → file
+  // Serve /pt/ → pt/index.html
+  if (req.path === '/pt' || req.path === '/pt/') {
+    const filePath = path.join(__dirname, 'pt', 'index.html'); // pt/index.html
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    } else {
+      return res.status(404).send('404: Not Found');
+    }
+  }
+
+  // General mapping: /path → /path.html
   let filePath;
   if (req.path === '/' || req.path === '') {
     filePath = path.join(__dirname, 'pt.html'); // default root
