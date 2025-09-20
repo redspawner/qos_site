@@ -47,25 +47,8 @@ async function sendEmail(to, subject, text) {
 }
 
 // -----------------------------
-// 1️⃣ Serve specific root-level pages
+// 1️⃣ Serve root-level HTML files directly
 // -----------------------------
-const rootRedirects = {
-  '/pt.html': '/pt/',
-  '/eng.html': '/eng/',
-  '/fr.html': '/fr/',
-  '/enviado.html': '/enviado',
-  '/sent.html': '/sent',
-  '/envoye.html': '/envoye'
-};
-
-app.use((req, res, next) => {
-  if (rootRedirects[req.path]) {
-    return res.redirect(301, rootRedirects[req.path]);
-  }
-  next();
-});
-
-// Serve root-level pages directly if requested without redirect
 const rootPages = ['pt.html', 'eng.html', 'fr.html', 'enviado.html', 'sent.html', 'envoye.html'];
 app.get(rootPages.map(p => '/' + p), (req, res, next) => {
   const filePath = path.join(__dirname, req.path.slice(1));
@@ -74,7 +57,17 @@ app.get(rootPages.map(p => '/' + p), (req, res, next) => {
 });
 
 // -----------------------------
-// 2️⃣ Serve language main pages
+// 2️⃣ Redirect only explicit /pt/index.html, /eng/vinification.html, /fr/vinification.html → clean folder URL
+// -----------------------------
+app.use((req, res, next) => {
+  if (req.path === '/pt/index.html') return res.redirect(301, '/pt/');
+  if (req.path === '/eng/vinification.html') return res.redirect(301, '/eng/');
+  if (req.path === '/fr/vinification.html') return res.redirect(301, '/fr/');
+  next();
+});
+
+// -----------------------------
+// 3️⃣ Serve language main pages
 // -----------------------------
 app.get(['/pt', '/pt/'], (req, res) => {
   const filePath = path.join(__dirname, 'pt', 'index.html');
@@ -95,7 +88,7 @@ app.get(['/fr', '/fr/'], (req, res) => {
 });
 
 // -----------------------------
-// 3️⃣ Serve any page inside language folders
+// 4️⃣ Serve pages inside language folders
 // Example: /pt/sobre_nos → /pt/sobre_nos.html
 // -----------------------------
 app.get('/:lang/:page', (req, res, next) => {
@@ -109,7 +102,7 @@ app.get('/:lang/:page', (req, res, next) => {
 });
 
 // -----------------------------
-// 4️⃣ Form handler
+// 5️⃣ Form handler
 // -----------------------------
 app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
@@ -139,7 +132,7 @@ app.post('/submit-form', async (req, res) => {
 });
 
 // -----------------------------
-// 5️⃣ 404 fallback
+// 6️⃣ 404 fallback
 // -----------------------------
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
