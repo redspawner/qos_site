@@ -26,7 +26,6 @@ oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 // Gmail API sender
 async function sendEmail(to, subject, text) {
   const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
-
   const message = [
     `From: ${process.env.OAUTH_USER_EMAIL}`,
     `To: ${to}`,
@@ -48,7 +47,7 @@ async function sendEmail(to, subject, text) {
 }
 
 // =====================
-// 1️⃣ Serve root-level lang.html first
+// 1️⃣ Serve root-level lang.html first: /pt.html, /eng.html, /fr.html
 // =====================
 app.get(['/pt.html', '/eng.html', '/fr.html'], (req, res, next) => {
   const filePath = path.join(__dirname, req.path);
@@ -116,4 +115,55 @@ app.get(/.*/, (req, res, next) => {
 
   let filePath;
   if (req.path === '/' || req.path === '') {
-    filePath = path.join(__dirname, 'pt.html');
+    filePath = path.join(__dirname, 'pt.html'); // default root
+  } else {
+    filePath = path.join(__dirname, `${req.path}.html`);
+  }
+
+  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+
+  next();
+});
+
+// =====================
+// Form handler
+// =====================
+app.post('/submit-form', async (req, res) => {
+  const { lang = 'pt', name = '', email = '', message = '' } = req.body;
+
+  const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
+  fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => {
+    if (err) console.error('❌ Error writing submissions.txt:', err);
+  });
+
+  const recipients = process.env.NOTIFY_TO.split(',').map(e => e.trim());
+
+  try {
+    for (const to of recipients) {
+      await sendEmail(
+        to,
+        `New message from site (${lang.toUpperCase()})`,
+        `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}`
+      );
+    }
+  } catch (err) {
+    console.error('❌ Gmail API send error:', err);
+  }
+
+  if (lang === 'pt') return res.redirect('/pt/enviado');
+  if (lang === 'fr') return res.redirect('/fr/envoye');
+  if (lang === 'eng') return res.redirect('/eng/sent');
+  res.redirect('/');
+});
+
+// =====================
+// 404 fallback
+// =====================
+app.use((req, res) => res.status(404).send('404: Not Found'));
+
+// =====================
+// Start server
+// =====================
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running at http://0.0.0.0:${PORT}`);
+});
