@@ -25,6 +25,15 @@ article, aside, details, figcaption, figure,
 footer, header, hgroup, menu, nav, section {
 	display: block;}
 
+.fixed-logo {
+  max-width: 80%;   /* scales down inside the screen */
+  height: auto;     /* keeps proportions */
+  display: block;
+  margin: 0 auto;   /* center horizontally */
+}
+
+
+
 body {
 	line-height: 1;
 }
