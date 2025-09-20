@@ -23,10 +23,9 @@ const oAuth2Client = new google.auth.OAuth2(
 );
 oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 
-// Gmail API email sender
+// Gmail API sender
 async function sendEmail(to, subject, text) {
   const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
-
   const message = [
     `From: ${process.env.OAUTH_USER_EMAIL}`,
     `To: ${to}`,
@@ -41,51 +40,54 @@ async function sendEmail(to, subject, text) {
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 
-  return gmail.users.messages.send({
-    userId: 'me',
-    requestBody: { raw: encodedMessage }
-  });
+  return gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedMessage } });
 }
 
-// Redirect .html URLs to extensionless (only if the file exists)
+// Redirect only root HTML pages to extensionless
+const rootHtmlPages = ['pt.html', 'fr.html', 'eng.html', 'enviado.html', 'sent.html', 'envoye.html'];
 app.use((req, res, next) => {
-  if (req.path.endsWith('.html')) {
-    const filePath = path.join(__dirname, req.path);
-    if (fs.existsSync(filePath)) {
-      // /index.html → folder
-      if (req.path.endsWith('/index.html')) {
-        return res.redirect(301, req.path.replace(/index\.html$/, ''));
-      }
-      // other .html → remove extension
-      return res.redirect(301, req.path.slice(0, -5));
-    }
+  const name = req.path.slice(1); // remove leading /
+  if (rootHtmlPages.includes(name)) {
+    const clean = name.replace('.html', '');
+    return res.redirect(301, clean === 'pt' ? '/' : `/${clean}`);
   }
   next();
 });
 
-// Serve HTML files without extension, including folder index.html
+// Serve HTML files without extension
 app.get(/.*/, (req, res, next) => {
-  // Skip static assets
-  if (
-    req.path.startsWith('/images') ||
-    req.path.includes('.') // other files
-  ) return next();
+  if (req.path.startsWith('/images') || req.path.includes('.')) return next();
 
-  // Default root page
+  let filePath;
+
+  // Root page
   if (req.path === '/' || req.path === '') {
-    const rootFile = path.join(__dirname, 'pt.html');
-    if (fs.existsSync(rootFile)) return res.sendFile(rootFile);
+    filePath = path.join(__dirname, 'pt.html');
+    if (fs.existsSync(filePath)) return res.sendFile(filePath);
   }
 
-  // Try direct file
-  let filePath = path.join(__dirname, `${req.path}.html`);
+  // Form confirmation pages
+  const formPages = ['enviado', 'sent', 'envoye'];
+  if (formPages.includes(req.path.replace('/', ''))) {
+    filePath = path.join(__dirname, `${req.path}.html`);
+    if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  }
+
+  // Root folder pages (like /pt.html after redirect)
+  filePath = path.join(__dirname, `${req.path}.html`);
   if (fs.existsSync(filePath)) return res.sendFile(filePath);
 
-  // Try folder index
+  // Language folder pages
+  const parts = req.path.split('/').filter(Boolean); // remove empty
+  if (parts.length >= 2) {
+    filePath = path.join(__dirname, parts[0], `${parts.slice(1).join('/')}.html`);
+    if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  }
+
+  // Try folder index.html fallback
   filePath = path.join(__dirname, req.path, 'index.html');
   if (fs.existsSync(filePath)) return res.sendFile(filePath);
 
-  // Not found
   return next();
 });
 
@@ -99,13 +101,11 @@ app.post('/submit-form', async (req, res) => {
     message: message ? '[redacted]' : ''
   });
 
-  // Log submissions
   const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
   fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => {
     if (err) console.error('❌ Error writing submissions.txt:', err);
   });
 
-  // Send emails
   const recipients = process.env.NOTIFY_TO.split(',').map(e => e.trim());
   try {
     for (const to of recipients) {
@@ -120,10 +120,9 @@ app.post('/submit-form', async (req, res) => {
     console.error('❌ Gmail API send error:', err);
   }
 
-  // Redirect after form
-  if (lang === 'pt') return res.redirect('/pt/enviado');
-  if (lang === 'fr') return res.redirect('/fr/envoye');
-  if (lang === 'eng') return res.redirect('/eng/sent');
+  if (lang === 'pt') return res.redirect('/enviado');
+  if (lang === 'fr') return res.redirect('/envoye');
+  if (lang === 'eng') return res.redirect('/sent');
   res.redirect('/');
 });
 
