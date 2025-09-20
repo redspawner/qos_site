@@ -5,7 +5,7 @@ const fs = require('fs');
 const nodemailer = require('nodemailer');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // single declaration
 
 // Body parsers
 app.use(express.urlencoded({ extended: true }));
@@ -59,12 +59,12 @@ app.post('/submit-form', async (req, res) => {
   });
 
   // Email options
-const mailOptions = {
-  from: process.env.EMAIL_FROM,
-  to: process.env.NOTIFY_TO,
-  subject: `New message from site (${lang.toUpperCase()})`,
-  text: `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}\n`
-};
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: process.env.NOTIFY_TO,
+    subject: `New message from site (${lang.toUpperCase()})`,
+    text: `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}\n`
+  };
 
   // Send email
   try {
@@ -84,14 +84,7 @@ const mailOptions = {
 // 404
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
-// Start
-const PORT = process.env.PORT;
-if (!PORT) {
-  console.error("❌ No PORT defined in environment!");
-  process.exit(1);
-}
-
+// Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running at http://0.0.0.0:${PORT}`);
 });
-
