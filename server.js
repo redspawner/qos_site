@@ -24,24 +24,29 @@ const oAuth2Client = new google.auth.OAuth2(
 );
 oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 
-// Nodemailer transporter
+// Create Nodemailer transporter
 async function createTransporter() {
-  const { token } = await oAuth2Client.getAccessToken();
-  if (!token) throw new Error('Failed to retrieve OAuth2 access token');
+  try {
+    const { token } = await oAuth2Client.getAccessToken();
+    if (!token) throw new Error('Failed to retrieve OAuth2 access token');
+    console.log('✅ OAuth2 access token retrieved');
 
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      type: 'OAuth2',
-      user: process.env.OAUTH_USER_EMAIL,
-      clientId: process.env.OAUTH_CLIENT_ID,
-      clientSecret: process.env.OAUTH_CLIENT_SECRET,
-      refreshToken: process.env.OAUTH_REFRESH_TOKEN,
-      accessToken: token
-    }
-  });
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: process.env.OAUTH_USER_EMAIL,
+        clientId: process.env.OAUTH_CLIENT_ID,
+        clientSecret: process.env.OAUTH_CLIENT_SECRET,
+        refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+        accessToken: token
+      }
+    });
+  } catch (err) {
+    console.error('❌ Error creating transporter:', err);
+    throw err;
+  }
 }
-
 
 // Pages
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
@@ -54,23 +59,24 @@ app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
   console.log('Received submission:', { lang, name, email: email ? '[redacted]' : '', message: message ? '[redacted]' : '' });
 
-  const now = new Date();
-  const logLine = `${now.toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
-  fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => { if (err) console.error(err); });
+  // Save to submissions.txt
+  const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
+  fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => { if (err) console.error('❌ Error writing submissions.txt:', err); });
 
   try {
     const transporter = await createTransporter();
-    await transporter.sendMail({
+    const mailResult = await transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to: process.env.NOTIFY_TO,
       subject: `New message from site (${lang.toUpperCase()})`,
       text: `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}`
     });
-    console.log('📧 Email sent successfully!');
+    console.log('📧 Email sent successfully!', mailResult.messageId);
   } catch (err) {
-    console.error('❌ Email send error:', err);
+    console.error('❌ Email send failed:', err);
   }
 
+  // Redirect
   if (lang === 'pt') return res.redirect('/enviado.html');
   if (lang === 'fr') return res.redirect('/envoye.html');
   if (lang === 'eng') return res.redirect('/sent.html');
