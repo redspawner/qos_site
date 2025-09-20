@@ -11,8 +11,8 @@ const PORT = process.env.PORT || 8080;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Serve static assets
-app.use('/assets', express.static(path.join(__dirname, 'assets')));
+// Serve static files
+app.use(express.static(__dirname));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // OAuth2 setup
@@ -23,7 +23,7 @@ const oAuth2Client = new google.auth.OAuth2(
 );
 oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 
-// Gmail API sender
+// Gmail API email sender
 async function sendEmail(to, subject, text) {
   const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
   const message = [
@@ -47,94 +47,24 @@ async function sendEmail(to, subject, text) {
 }
 
 // -----------------------------
-// Redirect /pt/index.html → /pt/ only
+// Redirect *.html → extensionless
 // -----------------------------
 app.use((req, res, next) => {
-  if (req.path === '/pt/index.html' || req.path === '/pt/index') return res.redirect(301, '/pt/');
-  next();
-});
-
-// -----------------------------
-// Serve root-level HTML files
-// -----------------------------
-const rootFiles = ['pt.html','eng.html','fr.html','enviado.html','sent.html','envoye.html'];
-app.get('*', (req,res,next) => {
-  let file = req.path.replace(/^\/+/, ''); // remove leading slash
-  if (rootFiles.includes(file)) {
-    const filePath = path.join(__dirname, file);
-    if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  // Special case: /pt/index.html → /pt/
+  if (req.path === '/pt/index.html' || req.path === '/pt/index') {
+    return res.redirect(301, '/pt/');
   }
+
+  // General redirect for other *.html files in root
+  if (req.path.endsWith('.html')) {
+    const clean = req.path.slice(0, -5); // remove .html
+    return res.redirect(301, clean || '/');
+  }
+
   next();
 });
 
 // -----------------------------
-// Serve language folder pages
+// Root HTML pages
 // -----------------------------
-['pt','eng','fr'].forEach(lang => {
-  app.get(`/${lang}/*`, (req,res,next) => {
-    let filePath = path.join(__dirname, req.path);
-    if (!path.extname(filePath)) filePath += '.html';
-    if (fs.existsSync(filePath)) return res.sendFile(filePath);
-    next();
-  });
-});
-
-// -----------------------------
-// Serve main language pages directly
-// -----------------------------
-app.get(['/pt','/pt/'], (req,res)=>{
-  const filePath = path.join(__dirname,'pt','index.html');
-  if(fs.existsSync(filePath)) return res.sendFile(filePath);
-  res.status(404).send('404: Not Found');
-});
-
-app.get(['/eng','/eng/'], (req,res)=>{
-  const filePath = path.join(__dirname,'eng','vinification.html');
-  if(fs.existsSync(filePath)) return res.sendFile(filePath);
-  res.status(404).send('404: Not Found');
-});
-
-app.get(['/fr','/fr/'], (req,res)=>{
-  const filePath = path.join(__dirname,'fr','vinification.html');
-  if(fs.existsSync(filePath)) return res.sendFile(filePath);
-  res.status(404).send('404: Not Found');
-});
-
-// -----------------------------
-// Form handler
-// -----------------------------
-app.post('/submit-form', async (req,res)=>{
-  const { lang='pt', name='', email='', message='' } = req.body;
-
-  const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
-  fs.appendFile(path.join(__dirname,'submissions.txt'),logLine,err=>{
-    if(err) console.error('❌ Error writing submissions.txt:',err);
-  });
-
-  const recipients = process.env.NOTIFY_TO.split(',').map(e=>e.trim());
-  try{
-    for(const to of recipients){
-      await sendEmail(
-        to,
-        `New message from site (${lang.toUpperCase()})`,
-        `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}`
-      );
-    }
-  }catch(err){ console.error('❌ Gmail API send error:',err); }
-
-  // Redirect to root-level confirmation pages
-  if(lang==='pt') return res.redirect('/enviado');
-  if(lang==='fr') return res.redirect('/envoye');
-  if(lang==='eng') return res.redirect('/sent');
-  res.redirect('/');
-});
-
-// -----------------------------
-// 404 fallback
-// -----------------------------
-app.use((req,res)=>res.status(404).send('404: Not Found'));
-
-// -----------------------------
-// Start server
-// -----------------------------
-app.listen(PORT,'0.0.0.0',()=>console.log(`✅ Server running at http://0.0.0.0:${PORT}`));
+c
