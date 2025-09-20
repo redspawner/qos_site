@@ -48,17 +48,30 @@ async function sendEmail(to, subject, text) {
 }
 
 // =====================
-// 1️⃣ Serve root-level lang.html first: /pt.html, /eng.html, /fr.html
+// 1️⃣ Serve root-level lang.html first
 // =====================
 app.get(['/pt.html', '/eng.html', '/fr.html'], (req, res, next) => {
   const filePath = path.join(__dirname, req.path);
   if (fs.existsSync(filePath)) return res.sendFile(filePath);
-  return next();
+  next();
 });
 
 // =====================
-// 2️⃣ Redirect /<lang>/index or /<lang>/index.html → /<lang>/
-// 2️⃣ Fix relative root links inside language folders
+// 2️⃣ Serve language index pages: /pt/, /eng/, /fr/
+// =====================
+app.get(['/:lang', '/:lang/'], (req, res, next) => {
+  const langFolders = ['pt', 'eng', 'fr'];
+  const lang = req.params.lang;
+  if (!langFolders.includes(lang)) return next();
+
+  const filePath = path.join(__dirname, lang, 'index.html');
+  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  return res.status(404).send('404: Not Found');
+});
+
+// =====================
+// 3️⃣ Redirect /<lang>/index or /<lang>/index.html → /<lang>/
+// 3️⃣ Redirect relative root links inside language folders
 // =====================
 app.use((req, res, next) => {
   const langFolders = ['pt', 'eng', 'fr'];
@@ -80,26 +93,13 @@ app.use((req, res, next) => {
 });
 
 // =====================
-// 3️⃣ Serve language index pages: /pt/, /eng/, /fr/
-// =====================
-app.get(['/:lang', '/:lang/'], (req, res, next) => {
-  const langFolders = ['pt', 'eng', 'fr'];
-  const lang = req.params.lang;
-  if (!langFolders.includes(lang)) return next();
-
-  const filePath = path.join(__dirname, lang, 'index.html');
-  if (fs.existsSync(filePath)) return res.sendFile(filePath);
-  return res.status(404).send('404: Not Found');
-});
-
-// =====================
-// 4️⃣ General .html → extensionless redirect for other pages
+// 4️⃣ General .html → extensionless redirect
 // =====================
 app.use((req, res, next) => {
   if (req.path.endsWith('.html')) {
     const filePath = path.join(__dirname, req.path);
     if (fs.existsSync(filePath)) {
-      const clean = req.path.slice(0, -5); // remove .html
+      const clean = req.path.slice(0, -5);
       return res.redirect(301, clean || '/');
     }
   }
@@ -107,78 +107,13 @@ app.use((req, res, next) => {
 });
 
 // =====================
-// 5️⃣ Serve all other HTML pages without extension
+// 5️⃣ Serve other HTML files without extension
 // =====================
 app.get(/.*/, (req, res, next) => {
-  if (
-    req.path.startsWith('/assets') ||
-    req.path.startsWith('/images') ||
-    req.path.includes('.')
-  ) {
+  if (req.path.startsWith('/assets') || req.path.startsWith('/images') || req.path.includes('.')) {
     return next();
   }
 
   let filePath;
   if (req.path === '/' || req.path === '') {
-    filePath = path.join(__dirname, 'pt.html'); // default root
-  } else {
-    filePath = path.join(__dirname, `${req.path}.html`);
-  }
-
-  if (fs.existsSync(filePath)) {
-    return res.sendFile(filePath);
-  }
-
-  return next();
-});
-
-// =====================
-// Form handler
-// =====================
-app.post('/submit-form', async (req, res) => {
-  const { lang = 'pt', name = '', email = '', message = '' } = req.body;
-  console.log('Received submission:', {
-    lang,
-    name,
-    email: email ? '[redacted]' : '',
-    message: message ? '[redacted]' : ''
-  });
-
-  const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
-  fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => {
-    if (err) console.error('❌ Error writing submissions.txt:', err);
-  });
-
-  const recipients = process.env.NOTIFY_TO.split(',').map(e => e.trim());
-
-  try {
-    for (const to of recipients) {
-      await sendEmail(
-        to,
-        `New message from site (${lang.toUpperCase()})`,
-        `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}`
-      );
-      console.log(`📧 Email sent to ${to}`);
-    }
-  } catch (err) {
-    console.error('❌ Gmail API send error:', err);
-  }
-
-  // Redirect after form
-  if (lang === 'pt') return res.redirect('/pt/enviado');
-  if (lang === 'fr') return res.redirect('/fr/envoye');
-  if (lang === 'eng') return res.redirect('/eng/sent');
-  res.redirect('/');
-});
-
-// =====================
-// 404 fallback
-// =====================
-app.use((req, res) => res.status(404).send('404: Not Found'));
-
-// =====================
-// Start server
-// =====================
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running at http://0.0.0.0:${PORT}`);
-});
+    filePath = path.join(__dirname, 'pt.html');
