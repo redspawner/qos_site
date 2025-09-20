@@ -1,5 +1,4 @@
 require('dotenv').config(); // load .env locally
-
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -27,18 +26,18 @@ serveStaticWithMP4('/eng', 'eng');
 serveStaticWithMP4('/pt', 'pt');
 serveStaticWithMP4('/images', 'images');
 
-// Nodemailer transporter using Railway environment variables
+// Nodemailer transporter using environment variables
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,          // e.g., smtp.gmail.com
-  port: Number(process.env.SMTP_PORT),  // e.g., 587
-  secure: process.env.SMTP_SECURE === 'true', // true for 465, false for 587
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: process.env.SMTP_SECURE === 'true',
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
   }
 });
 
-// Landing pages
+// Simple pages
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
 app.get('/pt.html', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
 app.get('/fr.html', (req, res) => res.sendFile(path.join(__dirname, 'fr.html')));
@@ -59,13 +58,15 @@ app.post('/submit-form', async (req, res) => {
     if (err) console.error('Error writing submissions.txt:', err);
   });
 
-  const mailOptions = {
-    from: process.env.EMAIL_FROM,
-    to: process.env.NOTIFY_TO,
-    subject: `New message from site (${lang.toUpperCase()})`,
-    text: `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}\n`
-  };
+  // Email options
+const mailOptions = {
+  from: process.env.EMAIL_FROM,
+  to: process.env.NOTIFY_TO,
+  subject: `New message from site (${lang.toUpperCase()})`,
+  text: `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}\n`
+};
 
+  // Send email
   try {
     const info = await transporter.sendMail(mailOptions);
     console.log('📧 Email sent:', info.messageId || info.response);
@@ -83,5 +84,5 @@ app.post('/submit-form', async (req, res) => {
 // 404
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
-// Start server
+// Start
 app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT} (port ${PORT})`));
