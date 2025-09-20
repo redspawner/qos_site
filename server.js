@@ -47,16 +47,25 @@ async function sendEmail(to, subject, text) {
 }
 
 // =====================
-// 1️⃣ Serve root-level lang.html first: /pt.html, /eng.html, /fr.html
+// 1️⃣ Serve root-level HTML files
 // =====================
-app.get(['/pt.html', '/eng.html', '/fr.html'], (req, res, next) => {
-  const filePath = path.join(__dirname, req.path);
+app.get(['/', '/pt.html', '/eng.html', '/fr.html'], (req, res, next) => {
+  let filePath = req.path === '/' ? path.join(__dirname, 'pt.html') : path.join(__dirname, req.path);
   if (fs.existsSync(filePath)) return res.sendFile(filePath);
   next();
 });
 
 // =====================
-// 2️⃣ Serve language index pages: /pt/, /eng/, /fr/
+// 2️⃣ Redirect /lang/index.html → /lang/
+// =====================
+app.use((req, res, next) => {
+  const match = req.path.match(/^\/(pt|eng|fr)\/index(\.html)?$/);
+  if (match) return res.redirect(301, `/${match[1]}/`);
+  next();
+});
+
+// =====================
+// 3️⃣ Serve /lang/ → /lang/index.html
 // =====================
 app.get(['/:lang', '/:lang/'], (req, res, next) => {
   const langFolders = ['pt', 'eng', 'fr'];
@@ -69,22 +78,15 @@ app.get(['/:lang', '/:lang/'], (req, res, next) => {
 });
 
 // =====================
-// 3️⃣ Redirect /<lang>/index or /<lang>/index.html → /<lang>/
-// 3️⃣ Redirect relative root links inside language folders
+// 4️⃣ Redirect relative root links from language folders
 // =====================
 app.use((req, res, next) => {
   const langFolders = ['pt', 'eng', 'fr'];
-  const rootPages = ['enviado', 'enoturismo.html', 'sobre_nos.html', 'eng.html', 'fr.html'];
-
   const pathParts = req.path.split('/').filter(Boolean);
 
-  // Redirect index pages
-  if (langFolders.includes(pathParts[0]) && (pathParts[1] === 'index' || pathParts[1] === 'index.html')) {
-    return res.redirect(301, `/${pathParts[0]}/`);
-  }
-
-  // Redirect relative links in lang folder that should go to root
-  if (langFolders.includes(pathParts[0]) && rootPages.includes(pathParts[1])) {
+  // Only redirect if first part is a language folder and second part is a known root page
+  const rootPages = ['enviado', 'sobre_nos.html', 'enoturismo.html', 'eng.html', 'fr.html', 'pt.html'];
+  if (langFolders.includes(pathParts[0]) && pathParts.length > 1 && rootPages.includes(pathParts[1])) {
     return res.redirect(301, `/${pathParts[1]}`);
   }
 
@@ -92,7 +94,7 @@ app.use((req, res, next) => {
 });
 
 // =====================
-// 4️⃣ General .html → extensionless redirect
+// 5️⃣ General .html → extensionless redirect (only if file exists)
 // =====================
 app.use((req, res, next) => {
   if (req.path.endsWith('.html')) {
@@ -106,27 +108,19 @@ app.use((req, res, next) => {
 });
 
 // =====================
-// 5️⃣ Serve other HTML files without extension
+// 6️⃣ Serve any existing HTML file without extension
 // =====================
 app.get(/.*/, (req, res, next) => {
-  if (req.path.startsWith('/assets') || req.path.startsWith('/images') || req.path.includes('.')) {
-    return next();
-  }
+  if (req.path.startsWith('/assets') || req.path.startsWith('/images') || req.path.includes('.')) return next();
 
-  let filePath;
-  if (req.path === '/' || req.path === '') {
-    filePath = path.join(__dirname, 'pt.html'); // default root
-  } else {
-    filePath = path.join(__dirname, `${req.path}.html`);
-  }
-
+  const filePath = path.join(__dirname, `${req.path}.html`);
   if (fs.existsSync(filePath)) return res.sendFile(filePath);
 
   next();
 });
 
 // =====================
-// Form handler
+// 7️⃣ Form handler
 // =====================
 app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
@@ -137,7 +131,6 @@ app.post('/submit-form', async (req, res) => {
   });
 
   const recipients = process.env.NOTIFY_TO.split(',').map(e => e.trim());
-
   try {
     for (const to of recipients) {
       await sendEmail(
@@ -157,7 +150,7 @@ app.post('/submit-form', async (req, res) => {
 });
 
 // =====================
-// 404 fallback
+// 8️⃣ 404 fallback
 // =====================
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
