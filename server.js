@@ -47,27 +47,34 @@ async function sendEmail(to, subject, text) {
 }
 
 // -----------------------------
-// 1️⃣ Serve root-level HTML pages
+// 1️⃣ Serve specific root-level pages
 // -----------------------------
+const rootRedirects = {
+  '/pt.html': '/pt/',
+  '/eng.html': '/eng/',
+  '/fr.html': '/fr/',
+  '/enviado.html': '/enviado',
+  '/sent.html': '/sent',
+  '/envoye.html': '/envoye'
+};
+
+app.use((req, res, next) => {
+  if (rootRedirects[req.path]) {
+    return res.redirect(301, rootRedirects[req.path]);
+  }
+  next();
+});
+
+// Serve root-level pages directly if requested without redirect
 const rootPages = ['pt.html', 'eng.html', 'fr.html', 'enviado.html', 'sent.html', 'envoye.html'];
-app.get(['/', ...rootPages.map(p => '/' + p)], (req, res, next) => {
-  const filePath = req.path === '/' ? path.join(__dirname, 'pt.html') : path.join(__dirname, req.path.slice(1));
+app.get(rootPages.map(p => '/' + p), (req, res, next) => {
+  const filePath = path.join(__dirname, req.path.slice(1));
   if (fs.existsSync(filePath)) return res.sendFile(filePath);
   next();
 });
 
 // -----------------------------
-// 2️⃣ Redirect language main pages to folder root
-// -----------------------------
-app.use((req, res, next) => {
-  if (req.path === '/pt/index.html') return res.redirect(301, '/pt/');
-  if (req.path === '/eng/vinification.html') return res.redirect(301, '/eng/');
-  if (req.path === '/fr/vinification.html') return res.redirect(301, '/fr/');
-  next();
-});
-
-// -----------------------------
-// 3️⃣ Serve language main pages
+// 2️⃣ Serve language main pages
 // -----------------------------
 app.get(['/pt', '/pt/'], (req, res) => {
   const filePath = path.join(__dirname, 'pt', 'index.html');
@@ -88,7 +95,7 @@ app.get(['/fr', '/fr/'], (req, res) => {
 });
 
 // -----------------------------
-// 4️⃣ Serve any page inside language folders
+// 3️⃣ Serve any page inside language folders
 // Example: /pt/sobre_nos → /pt/sobre_nos.html
 // -----------------------------
 app.get('/:lang/:page', (req, res, next) => {
@@ -102,31 +109,7 @@ app.get('/:lang/:page', (req, res, next) => {
 });
 
 // -----------------------------
-// 5️⃣ General .html → extensionless redirect (only for root-level files)
-// -----------------------------
-app.use((req, res, next) => {
-  if (req.path.endsWith('.html')) {
-    const filePath = path.join(__dirname, req.path.slice(1));
-    if (fs.existsSync(filePath)) {
-      const clean = req.path.slice(0, -5);
-      return res.redirect(301, clean || '/');
-    }
-  }
-  next();
-});
-
-// -----------------------------
-// 6️⃣ Serve any other root-level HTML file without extension
-// -----------------------------
-app.get(/.*/, (req, res, next) => {
-  if (req.path.startsWith('/assets') || req.path.startsWith('/images') || req.path.includes('.')) return next();
-  const filePath = path.join(__dirname, `${req.path}.html`);
-  if (fs.existsSync(filePath)) return res.sendFile(filePath);
-  next();
-});
-
-// -----------------------------
-// 7️⃣ Form handler
+// 4️⃣ Form handler
 // -----------------------------
 app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
@@ -148,7 +131,7 @@ app.post('/submit-form', async (req, res) => {
     console.error('❌ Gmail API send error:', err);
   }
 
-  // ✅ Redirect to root-level confirmation pages
+  // Redirect to root-level confirmation pages
   if (lang === 'pt') return res.redirect('/enviado');
   if (lang === 'fr') return res.redirect('/envoye');
   if (lang === 'eng') return res.redirect('/sent');
@@ -156,7 +139,7 @@ app.post('/submit-form', async (req, res) => {
 });
 
 // -----------------------------
-// 8️⃣ 404 fallback
+// 5️⃣ 404 fallback
 // -----------------------------
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
