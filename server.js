@@ -47,57 +47,57 @@ async function sendEmail(to, subject, text) {
 }
 
 // -----------------------------
-// Redirect main language files to clean folder URLs
+// Redirect /pt/index.html → /pt/ only
 // -----------------------------
 app.use((req, res, next) => {
-  if (req.path === '/pt/index.html') return res.redirect(301, '/pt/');
-  if (req.path === '/eng/vinification.html') return res.redirect(301, '/eng/');
-  if (req.path === '/fr/vinification.html') return res.redirect(301, '/fr/');
+  if (req.path === '/pt/index.html' || req.path === '/pt/index') return res.redirect(301, '/pt/');
   next();
 });
 
 // -----------------------------
 // Serve root-level HTML files
 // -----------------------------
-app.get('*', (req, res, next) => {
-  const rootPages = ['pt.html','eng.html','fr.html','enviado.html','sent.html','envoye.html'];
-  let reqPath = req.path.replace(/^\/+/,'').replace(/\/+$/,''); // trim slashes
-  if (rootPages.includes(reqPath)) {
-    const filePath = path.join(__dirname, reqPath);
+const rootFiles = ['pt.html','eng.html','fr.html','enviado.html','sent.html','envoye.html'];
+app.get('*', (req,res,next) => {
+  let file = req.path.replace(/^\/+/, ''); // remove leading slash
+  if (rootFiles.includes(file)) {
+    const filePath = path.join(__dirname, file);
     if (fs.existsSync(filePath)) return res.sendFile(filePath);
   }
   next();
 });
 
 // -----------------------------
-// Serve language folder main pages
+// Serve language folder pages
+// -----------------------------
+['pt','eng','fr'].forEach(lang => {
+  app.get(`/${lang}/*`, (req,res,next) => {
+    let filePath = path.join(__dirname, req.path);
+    if (!path.extname(filePath)) filePath += '.html';
+    if (fs.existsSync(filePath)) return res.sendFile(filePath);
+    next();
+  });
+});
+
+// -----------------------------
+// Serve main language pages directly
 // -----------------------------
 app.get(['/pt','/pt/'], (req,res)=>{
   const filePath = path.join(__dirname,'pt','index.html');
   if(fs.existsSync(filePath)) return res.sendFile(filePath);
   res.status(404).send('404: Not Found');
 });
+
 app.get(['/eng','/eng/'], (req,res)=>{
   const filePath = path.join(__dirname,'eng','vinification.html');
   if(fs.existsSync(filePath)) return res.sendFile(filePath);
   res.status(404).send('404: Not Found');
 });
+
 app.get(['/fr','/fr/'], (req,res)=>{
   const filePath = path.join(__dirname,'fr','vinification.html');
   if(fs.existsSync(filePath)) return res.sendFile(filePath);
   res.status(404).send('404: Not Found');
-});
-
-// -----------------------------
-// Serve any other page inside language folders safely
-// -----------------------------
-['pt','eng','fr'].forEach(lang=>{
-  app.get(`/${lang}/*`, (req,res,next)=>{
-    let filePath = path.join(__dirname, req.path);
-    if(!path.extname(filePath)) filePath += '.html';
-    if(fs.existsSync(filePath)) return res.sendFile(filePath);
-    next();
-  });
 });
 
 // -----------------------------
