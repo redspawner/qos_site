@@ -85,4 +85,7 @@ const mailOptions = {
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
 // Start
-app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT} (port ${PORT})`));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running at http://0.0.0.0:${PORT}`);
+});
+
