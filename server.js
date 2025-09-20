@@ -47,17 +47,7 @@ async function sendEmail(to, subject, text) {
 }
 
 // -----------------------------
-// 1️⃣ Serve root-level HTML files directly
-// -----------------------------
-const rootPages = ['pt.html', 'eng.html', 'fr.html', 'enviado.html', 'sent.html', 'envoye.html'];
-app.get(rootPages.map(p => '/' + p), (req, res, next) => {
-  const filePath = path.join(__dirname, req.path.slice(1));
-  if (fs.existsSync(filePath)) return res.sendFile(filePath);
-  next();
-});
-
-// -----------------------------
-// 2️⃣ Redirect only explicit /pt/index.html, /eng/vinification.html, /fr/vinification.html → clean folder URL
+// Redirect specific language main files to folder root
 // -----------------------------
 app.use((req, res, next) => {
   if (req.path === '/pt/index.html') return res.redirect(301, '/pt/');
@@ -67,7 +57,20 @@ app.use((req, res, next) => {
 });
 
 // -----------------------------
-// 3️⃣ Serve language main pages
+// Serve HTML files without extension
+// Root-level HTML files
+// -----------------------------
+app.get(['/', '/pt.html', '/eng.html', '/fr.html', '/enviado.html', '/sent.html', '/envoye.html'], (req, res, next) => {
+  let filePath;
+  if (req.path === '/' || req.path === '/pt.html') filePath = path.join(__dirname, 'pt.html');
+  else filePath = path.join(__dirname, req.path.slice(1));
+
+  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  next();
+});
+
+// -----------------------------
+// Serve language folder main pages
 // -----------------------------
 app.get(['/pt', '/pt/'], (req, res) => {
   const filePath = path.join(__dirname, 'pt', 'index.html');
@@ -88,8 +91,7 @@ app.get(['/fr', '/fr/'], (req, res) => {
 });
 
 // -----------------------------
-// 4️⃣ Serve pages inside language folders
-// Example: /pt/sobre_nos → /pt/sobre_nos.html
+// Serve any page inside language folders
 // -----------------------------
 app.get('/:lang/:page', (req, res, next) => {
   const langFolders = ['pt', 'eng', 'fr'];
@@ -102,7 +104,7 @@ app.get('/:lang/:page', (req, res, next) => {
 });
 
 // -----------------------------
-// 5️⃣ Form handler
+// Form handler
 // -----------------------------
 app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
@@ -132,7 +134,7 @@ app.post('/submit-form', async (req, res) => {
 });
 
 // -----------------------------
-// 6️⃣ 404 fallback
+// 404 fallback
 // -----------------------------
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
