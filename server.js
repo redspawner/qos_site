@@ -5,7 +5,7 @@ const fs = require('fs');
 const nodemailer = require('nodemailer');
 
 const app = express();
-const PORT = process.env.PORT || 3000; // single declaration
+const PORT = 8080; // single declaration
 
 // Body parsers
 app.use(express.urlencoded({ extended: true }));
