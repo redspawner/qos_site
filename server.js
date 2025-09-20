@@ -12,8 +12,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 // Serve static files
-app.use('/assets', express.static(path.join(__dirname, 'assets')));
+app.use(express.static(__dirname));
 app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 // OAuth2 setup
 const oAuth2Client = new google.auth.OAuth2(
@@ -26,7 +27,6 @@ oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 // Gmail API sender
 async function sendEmail(to, subject, text) {
   const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
-
   const message = [
     `From: ${process.env.OAUTH_USER_EMAIL}`,
     `To: ${to}`,
@@ -47,69 +47,53 @@ async function sendEmail(to, subject, text) {
   });
 }
 
-// Root HTML pages (language selectors & message confirmations)
-const rootHtmlPages = [
-  '/pt.html',
-  '/eng.html',
-  '/fr.html',
-  '/enviado.html',
-  '/sent.html',
-  '/envoye.html'
-];
+// --- Pages ---
+// Serve root-level HTML explicitly
+app.get(['/', '/pt.html'], (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
+app.get('/fr.html', (req, res) => res.sendFile(path.join(__dirname, 'fr.html')));
+app.get('/eng.html', (req, res) => res.sendFile(path.join(__dirname, 'eng.html')));
+app.get('/enviado.html', (req, res) => res.sendFile(path.join(__dirname, 'enviado.html')));
+app.get('/sent.html', (req, res) => res.sendFile(path.join(__dirname, 'sent.html')));
+app.get('/envoye.html', (req, res) => res.sendFile(path.join(__dirname, 'envoye.html')));
 
-// Remove .html in subfolders only
-app.use((req, res, next) => {
-  if (req.path.endsWith('.html') && !rootHtmlPages.includes(req.path)) {
-    const filePath = path.join(__dirname, req.path);
-    if (fs.existsSync(filePath)) {
-      const cleanPath = req.path.slice(0, -5); // remove ".html"
-      return res.redirect(301, cleanPath);
-    }
+// Serve pages inside subfolders without breaking relative links
+app.get('/:lang/:page', (req, res, next) => {
+  const { lang, page } = req.params;
+  const filePath = path.join(__dirname, lang, `${page}.html`);
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
   }
   next();
 });
 
-// Serve HTML pages
-app.get(/.*/, (req, res, next) => {
-  // Serve static assets normally
-  if (
-    req.path.startsWith('/assets') ||
-    req.path.startsWith('/images') ||
-    req.path.includes('.')
-  ) {
-    return next();
-  }
-
-  let filePath;
-
-  // Root pages
-  if (req.path === '/' || req.path === '') {
-    filePath = path.join(__dirname, 'pt.html');
-  } else if (rootHtmlPages.includes(req.path + '.html')) {
-    filePath = path.join(__dirname, req.path + '.html');
-  } else {
-    // Subfolder pages
-    filePath = path.join(__dirname, req.path + '.html');
-  }
-
+// Optionally, serve subfolder index.html if requested
+app.get('/:lang/', (req, res, next) => {
+  const { lang } = req.params;
+  const filePath = path.join(__dirname, lang, 'index.html');
   if (fs.existsSync(filePath)) {
     return res.sendFile(filePath);
   }
-
-  return next();
+  next();
 });
 
-// Form handler
+// --- Form handler ---
 app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
+  console.log('Received submission:', {
+    lang,
+    name,
+    email: email ? '[redacted]' : '',
+    message: message ? '[redacted]' : ''
+  });
 
+  // Save to submissions.txt
   const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
   fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => {
     if (err) console.error('❌ Error writing submissions.txt:', err);
   });
 
+  // Send emails
   const recipients = process.env.NOTIFY_TO.split(',').map(e => e.trim());
-
   try {
     for (const to of recipients) {
       await sendEmail(
@@ -123,11 +107,11 @@ app.post('/submit-form', async (req, res) => {
     console.error('❌ Gmail API send error:', err);
   }
 
-  // Redirect after form
+  // Redirect after submission
   if (lang === 'pt') return res.redirect('/enviado.html');
   if (lang === 'fr') return res.redirect('/envoye.html');
   if (lang === 'eng') return res.redirect('/sent.html');
-  res.redirect('/pt.html');
+  res.redirect('/'); 
 });
 
 // 404 fallback
