@@ -47,60 +47,65 @@ async function sendEmail(to, subject, text) {
   });
 }
 
-// --- Redirect .html URLs to extensionless ---
+// Redirect .html URLs to extensionless (only if the file exists)
 app.use((req, res, next) => {
   if (req.path.endsWith('.html')) {
     const filePath = path.join(__dirname, req.path);
     if (fs.existsSync(filePath)) {
       // /index.html → folder
       if (req.path.endsWith('/index.html')) {
-        const folder = req.path.replace(/\/index\.html$/, '/');
-        return res.redirect(301, folder);
+        return res.redirect(301, req.path.replace(/index\.html$/, ''));
       }
-      // remove .html
-      const clean = req.path.slice(0, -5);
-      return res.redirect(301, clean || '/');
+      // other .html → remove extension
+      return res.redirect(301, req.path.slice(0, -5));
     }
   }
   next();
 });
 
-// Serve HTML files without extension
+// Serve HTML files without extension, including folder index.html
 app.get(/.*/, (req, res, next) => {
+  // Skip static assets
   if (
     req.path.startsWith('/images') ||
-    req.path.includes('.') // skip other static files
-  ) {
-    return next();
-  }
+    req.path.includes('.') // other files
+  ) return next();
 
-  // Map path → file
-  let filePath;
+  // Default root page
   if (req.path === '/' || req.path === '') {
-    filePath = path.join(__dirname, 'pt.html'); // default root
-  } else {
-    filePath = path.join(__dirname, `${req.path}.html`);
+    const rootFile = path.join(__dirname, 'pt.html');
+    if (fs.existsSync(rootFile)) return res.sendFile(rootFile);
   }
 
-  if (fs.existsSync(filePath)) {
-    return res.sendFile(filePath);
-  }
+  // Try direct file
+  let filePath = path.join(__dirname, `${req.path}.html`);
+  if (fs.existsSync(filePath)) return res.sendFile(filePath);
 
+  // Try folder index
+  filePath = path.join(__dirname, req.path, 'index.html');
+  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+
+  // Not found
   return next();
 });
 
 // Form handler
 app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
-  console.log('Received submission:', { lang, name, email: email ? '[redacted]' : '', message: message ? '[redacted]' : '' });
+  console.log('Received submission:', {
+    lang,
+    name,
+    email: email ? '[redacted]' : '',
+    message: message ? '[redacted]' : ''
+  });
 
-  // Save submission
+  // Log submissions
   const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
   fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => {
     if (err) console.error('❌ Error writing submissions.txt:', err);
   });
 
-  // Send email
+  // Send emails
   const recipients = process.env.NOTIFY_TO.split(',').map(e => e.trim());
   try {
     for (const to of recipients) {
@@ -116,14 +121,16 @@ app.post('/submit-form', async (req, res) => {
   }
 
   // Redirect after form
-  if (lang === 'pt') return res.redirect('/enviado');
-  if (lang === 'fr') return res.redirect('/envoye');
-  if (lang === 'eng') return res.redirect('/sent');
+  if (lang === 'pt') return res.redirect('/pt/enviado');
+  if (lang === 'fr') return res.redirect('/fr/envoye');
+  if (lang === 'eng') return res.redirect('/eng/sent');
   res.redirect('/');
 });
 
-// 404
+// 404 fallback
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running at http://0.0.0.0:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running at http://0.0.0.0:${PORT}`);
+});
