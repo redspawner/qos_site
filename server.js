@@ -48,24 +48,26 @@ async function sendEmail(to, subject, text) {
 }
 
 // =====================
-// 1. Fix /pt/index & /pt/index.html → /pt/
-// 2. Fix relative links under /pt/ pointing to root
+// Redirects middleware
 // =====================
 app.use((req, res, next) => {
-  // Special redirect: /pt/index.html or /pt/index → /pt/
-  if (req.path === '/pt/index.html' || req.path === '/pt/index') {
-    return res.redirect(301, '/pt/');
-  }
-
-  // Fix relative links that incorrectly go under /pt/
+  const langFolders = ['pt', 'eng', 'fr'];
   const rootPages = ['enviado', 'enoturismo.html', 'sobre_nos.html', 'eng.html', 'fr.html'];
-  const pathParts = req.path.split('/').filter(Boolean);
-  if (pathParts[0] === 'pt' && rootPages.includes(pathParts[1])) {
-    return res.redirect(301, '/' + pathParts[1]);
+
+  const pathParts = req.path.split('/').filter(Boolean); // split path into segments
+
+  // 1️⃣ /<lang>/index or /<lang>/index.html → /<lang>/
+  if (langFolders.includes(pathParts[0]) && (pathParts[1] === 'index' || pathParts[1] === 'index.html')) {
+    return res.redirect(301, `/${pathParts[0]}/`);
   }
 
-  // General .html → extensionless redirect, but skip /pt.html
-  if (req.path.endsWith('.html') && req.path !== '/pt.html') {
+  // 2️⃣ Relative links inside lang folder that point to root
+  if (langFolders.includes(pathParts[0]) && rootPages.includes(pathParts[1])) {
+    return res.redirect(301, `/${pathParts[1]}`);
+  }
+
+  // 3️⃣ General .html → extensionless redirect (skip language index and root lang.html)
+  if (req.path.endsWith('.html') && !['pt.html', 'eng.html', 'fr.html'].includes(pathParts[0] + '.html') && pathParts[1] !== 'index') {
     const filePath = path.join(__dirname, req.path);
     if (fs.existsSync(filePath)) {
       const clean = req.path.slice(0, -5); // remove .html
@@ -79,6 +81,28 @@ app.use((req, res, next) => {
 // =====================
 // Serve HTML files
 // =====================
+
+// Serve language index pages: /pt/, /eng/, /fr/
+app.get(['/:lang', '/:lang/'], (req, res, next) => {
+  const lang = req.params.lang;
+  const langFolders = ['pt', 'eng', 'fr'];
+  if (!langFolders.includes(lang)) return next();
+
+  const filePath = path.join(__dirname, lang, 'index.html');
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('404: Not Found');
+});
+
+// Serve root-level lang.html files: /pt.html, /eng.html, /fr.html
+app.get(['/pt.html', '/eng.html', '/fr.html'], (req, res, next) => {
+  const filePath = path.join(__dirname, req.path);
+  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  return next();
+});
+
+// General mapping: /path → /path.html
 app.get(/.*/, (req, res, next) => {
   if (
     req.path.startsWith('/assets') ||
@@ -88,25 +112,6 @@ app.get(/.*/, (req, res, next) => {
     return next();
   }
 
-  // Serve /pt/ → pt/index.html
-  if (req.path === '/pt' || req.path === '/pt/') {
-    const filePath = path.join(__dirname, 'pt', 'index.html');
-    if (fs.existsSync(filePath)) {
-      return res.sendFile(filePath);
-    } else {
-      return res.status(404).send('404: Not Found');
-    }
-  }
-
-  // Serve /pt.html as-is (root-level file)
-  if (req.path === '/pt') {
-    const filePath = path.join(__dirname, 'pt.html');
-    if (fs.existsSync(filePath)) {
-      return res.sendFile(filePath);
-    }
-  }
-
-  // General mapping: /path → /path.html
   let filePath;
   if (req.path === '/' || req.path === '') {
     filePath = path.join(__dirname, 'pt.html'); // default root
