@@ -4724,6 +4724,38 @@ input, select, textarea {
     max-width: 100%; /* on very small screens, full width */
   }
 }
+/* Prevent intro buttons from disappearing on small screens */
+#intro .actions {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+#intro .actions li {
+  flex: 1 1 auto;
+  min-width: 120px;
+  text-align: center;
+}
+
+/* First group (Yes/No) */
+#intro .actions:first-of-type {
+  margin-bottom: 1.5rem;
+}
+
+/* Stack on narrow phones */
+@media screen and (max-width: 480px) {
+  #intro .actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #intro .actions li {
+    width: 100%;
+    max-width: 250px;
+  }
+}
 
 		
 	}
