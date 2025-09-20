@@ -15,7 +15,7 @@ app.use(express.json());
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// Gmail setup
+// OAuth2 setup
 const oAuth2Client = new google.auth.OAuth2(
   process.env.OAUTH_CLIENT_ID,
   process.env.OAUTH_CLIENT_SECRET,
@@ -23,6 +23,7 @@ const oAuth2Client = new google.auth.OAuth2(
 );
 oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 
+// Gmail API sender
 async function sendEmail(to, subject, text) {
   const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
   const message = [
@@ -39,21 +40,37 @@ async function sendEmail(to, subject, text) {
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 
-  return gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedMessage } });
+  return gmail.users.messages.send({
+    userId: 'me',
+    requestBody: { raw: encodedMessage }
+  });
 }
 
 // -----------------------------
-// Serve root-level HTML files directly
+// Redirect main language files to clean folder URLs
 // -----------------------------
-const rootPages = ['pt.html','eng.html','fr.html','enviado.html','sent.html','envoye.html'];
-app.get(rootPages.map(p => '/' + p), (req,res,next)=>{
-  const filePath = path.join(__dirname, req.path.slice(1));
-  if(fs.existsSync(filePath)) return res.sendFile(filePath);
+app.use((req, res, next) => {
+  if (req.path === '/pt/index.html') return res.redirect(301, '/pt/');
+  if (req.path === '/eng/vinification.html') return res.redirect(301, '/eng/');
+  if (req.path === '/fr/vinification.html') return res.redirect(301, '/fr/');
   next();
 });
 
 // -----------------------------
-// Serve main language pages
+// Serve root-level HTML files dynamically
+// -----------------------------
+app.get('*', (req, res, next) => {
+  const rootPages = ['pt.html','eng.html','fr.html','enviado.html','sent.html','envoye.html'];
+  let reqPath = req.path.replace(/^\/+/,'').replace(/\/+$/,''); // trim leading/trailing slashes
+  if (rootPages.includes(reqPath)) {
+    const filePath = path.join(__dirname, reqPath);
+    if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  }
+  next();
+});
+
+// -----------------------------
+// Serve language folder main pages
 // -----------------------------
 app.get(['/pt','/pt/'], (req,res)=>{
   const filePath = path.join(__dirname,'pt','index.html');
@@ -89,6 +106,7 @@ app.get('/:lang/:page', (req,res,next)=>{
 // -----------------------------
 app.post('/submit-form', async (req,res)=>{
   const { lang='pt', name='', email='', message='' } = req.body;
+
   const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
   fs.appendFile(path.join(__dirname,'submissions.txt'),logLine,err=>{
     if(err) console.error('❌ Error writing submissions.txt:',err);
