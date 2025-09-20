@@ -26,7 +26,10 @@ oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 
 // Nodemailer transporter
 async function createTransporter() {
-  const accessToken = await oAuth2Client.getAccessToken();
+const { token } = await oAuth2Client.getAccessToken();
+if (!token) throw new Error('Failed to retrieve access token');
+
+  
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
