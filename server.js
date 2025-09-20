@@ -57,11 +57,11 @@ app.use((req, res, next) => {
 });
 
 // -----------------------------
-// Serve root-level HTML files dynamically
+// Serve root-level HTML files
 // -----------------------------
 app.get('*', (req, res, next) => {
   const rootPages = ['pt.html','eng.html','fr.html','enviado.html','sent.html','envoye.html'];
-  let reqPath = req.path.replace(/^\/+/,'').replace(/\/+$/,''); // trim leading/trailing slashes
+  let reqPath = req.path.replace(/^\/+/,'').replace(/\/+$/,''); // trim slashes
   if (rootPages.includes(reqPath)) {
     const filePath = path.join(__dirname, reqPath);
     if (fs.existsSync(filePath)) return res.sendFile(filePath);
@@ -89,16 +89,15 @@ app.get(['/fr','/fr/'], (req,res)=>{
 });
 
 // -----------------------------
-// Serve pages inside language folders
-// Example: /pt/sobre_nos → /pt/sobre_nos.html
+// Serve any other page inside language folders safely
 // -----------------------------
-app.get('/:lang/:page', (req,res,next)=>{
-  const {lang,page} = req.params;
-  const langFolders = ['pt','eng','fr'];
-  if(!langFolders.includes(lang)) return next();
-  const filePath = path.join(__dirname,lang,`${page}.html`);
-  if(fs.existsSync(filePath)) return res.sendFile(filePath);
-  next();
+['pt','eng','fr'].forEach(lang=>{
+  app.get(`/${lang}/*`, (req,res,next)=>{
+    let filePath = path.join(__dirname, req.path);
+    if(!path.extname(filePath)) filePath += '.html';
+    if(fs.existsSync(filePath)) return res.sendFile(filePath);
+    next();
+  });
 });
 
 // -----------------------------
