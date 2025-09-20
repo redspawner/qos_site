@@ -57,7 +57,7 @@ const rootHtmlPages = [
   '/envoye.html'
 ];
 
-// Redirect .html requests to extensionless only for subfolders
+// Remove .html in subfolders only
 app.use((req, res, next) => {
   if (req.path.endsWith('.html') && !rootHtmlPages.includes(req.path)) {
     const filePath = path.join(__dirname, req.path);
@@ -69,9 +69,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve HTML files
+// Serve HTML pages
 app.get(/.*/, (req, res, next) => {
-  // Ignore static assets
+  // Serve static assets normally
   if (
     req.path.startsWith('/assets') ||
     req.path.startsWith('/images') ||
@@ -102,12 +102,6 @@ app.get(/.*/, (req, res, next) => {
 // Form handler
 app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
-  console.log('Received submission:', {
-    lang,
-    name,
-    email: email ? '[redacted]' : '',
-    message: message ? '[redacted]' : ''
-  });
 
   const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
   fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => {
