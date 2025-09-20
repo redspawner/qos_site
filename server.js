@@ -46,56 +46,63 @@ async function sendEmail(to, subject, text) {
   });
 }
 
-// =====================
+// -----------------------------
 // 1️⃣ Serve root-level HTML files
-// =====================
+// -----------------------------
 app.get(['/', '/pt.html', '/eng.html', '/fr.html'], (req, res, next) => {
-  let filePath = req.path === '/' ? path.join(__dirname, 'pt.html') : path.join(__dirname, req.path);
+  const filePath = req.path === '/' ? path.join(__dirname, 'pt.html') : path.join(__dirname, req.path);
   if (fs.existsSync(filePath)) return res.sendFile(filePath);
   next();
 });
 
-// =====================
-// 2️⃣ Redirect /lang/index.html → /lang/
-// =====================
+// -----------------------------
+// 2️⃣ Redirect /pt/index.html → /pt/
+// -----------------------------
 app.use((req, res, next) => {
-  const match = req.path.match(/^\/(pt|eng|fr)\/index(\.html)?$/);
-  if (match) return res.redirect(301, `/${match[1]}/`);
+  if (req.path === '/pt/index.html') return res.redirect(301, '/pt/');
+  if (req.path === '/eng/vinification.html') return res.redirect(301, '/eng/');
+  if (req.path === '/fr/vinification.html') return res.redirect(301, '/fr/');
   next();
 });
 
-// =====================
-// 3️⃣ Serve /lang/ → /lang/index.html
-// =====================
-app.get(['/:lang', '/:lang/'], (req, res, next) => {
+// -----------------------------
+// 3️⃣ Serve language main pages
+// -----------------------------
+app.get(['/pt', '/pt/'], (req, res) => {
+  const filePath = path.join(__dirname, 'pt', 'index.html');
+  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  res.status(404).send('404: Not Found');
+});
+
+app.get(['/eng', '/eng/'], (req, res) => {
+  const filePath = path.join(__dirname, 'eng', 'vinification.html');
+  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  res.status(404).send('404: Not Found');
+});
+
+app.get(['/fr', '/fr/'], (req, res) => {
+  const filePath = path.join(__dirname, 'fr', 'vinification.html');
+  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  res.status(404).send('404: Not Found');
+});
+
+// -----------------------------
+// 4️⃣ Serve any page inside language folders
+// Example: /pt/sobre_nos → /pt/sobre_nos.html
+// -----------------------------
+app.get('/:lang/:page', (req, res, next) => {
   const langFolders = ['pt', 'eng', 'fr'];
-  const lang = req.params.lang;
+  const { lang, page } = req.params;
   if (!langFolders.includes(lang)) return next();
 
-  const filePath = path.join(__dirname, lang, 'index.html');
+  const filePath = path.join(__dirname, lang, `${page}.html`);
   if (fs.existsSync(filePath)) return res.sendFile(filePath);
-  return res.status(404).send('404: Not Found');
-});
-
-// =====================
-// 4️⃣ Redirect relative root links from language folders
-// =====================
-app.use((req, res, next) => {
-  const langFolders = ['pt', 'eng', 'fr'];
-  const pathParts = req.path.split('/').filter(Boolean);
-
-  // Only redirect if first part is a language folder and second part is a known root page
-  const rootPages = ['enviado', 'sobre_nos.html', 'enoturismo.html', 'eng.html', 'fr.html', 'pt.html'];
-  if (langFolders.includes(pathParts[0]) && pathParts.length > 1 && rootPages.includes(pathParts[1])) {
-    return res.redirect(301, `/${pathParts[1]}`);
-  }
-
   next();
 });
 
-// =====================
-// 5️⃣ General .html → extensionless redirect (only if file exists)
-// =====================
+// -----------------------------
+// 5️⃣ General .html → extensionless redirect (root-level files)
+// -----------------------------
 app.use((req, res, next) => {
   if (req.path.endsWith('.html')) {
     const filePath = path.join(__dirname, req.path);
@@ -107,24 +114,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// =====================
-// 6️⃣ Serve any existing HTML file without extension
-// =====================
+// -----------------------------
+// 6️⃣ Serve any other root-level HTML file without extension
+// -----------------------------
 app.get(/.*/, (req, res, next) => {
   if (req.path.startsWith('/assets') || req.path.startsWith('/images') || req.path.includes('.')) return next();
-
   const filePath = path.join(__dirname, `${req.path}.html`);
   if (fs.existsSync(filePath)) return res.sendFile(filePath);
-
   next();
 });
 
-// =====================
+// -----------------------------
 // 7️⃣ Form handler
-// =====================
+// -----------------------------
 app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
-
   const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
   fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => {
     if (err) console.error('❌ Error writing submissions.txt:', err);
@@ -149,14 +153,14 @@ app.post('/submit-form', async (req, res) => {
   res.redirect('/');
 });
 
-// =====================
+// -----------------------------
 // 8️⃣ 404 fallback
-// =====================
+// -----------------------------
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
-// =====================
+// -----------------------------
 // Start server
-// =====================
+// -----------------------------
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running at http://0.0.0.0:${PORT}`);
 });
