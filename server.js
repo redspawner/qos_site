@@ -15,7 +15,7 @@ app.use(express.json());
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// OAuth2 setup
+// Gmail setup
 const oAuth2Client = new google.auth.OAuth2(
   process.env.OAUTH_CLIENT_ID,
   process.env.OAUTH_CLIENT_SECRET,
@@ -23,7 +23,6 @@ const oAuth2Client = new google.auth.OAuth2(
 );
 oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 
-// Gmail API sender
 async function sendEmail(to, subject, text) {
   const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
   const message = [
@@ -40,107 +39,85 @@ async function sendEmail(to, subject, text) {
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 
-  return gmail.users.messages.send({
-    userId: 'me',
-    requestBody: { raw: encodedMessage }
-  });
+  return gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedMessage } });
 }
 
 // -----------------------------
-// Redirect specific language main files to folder root
+// Serve root-level HTML files directly
 // -----------------------------
-app.use((req, res, next) => {
-  if (req.path === '/pt/index.html') return res.redirect(301, '/pt/');
-  if (req.path === '/eng/vinification.html') return res.redirect(301, '/eng/');
-  if (req.path === '/fr/vinification.html') return res.redirect(301, '/fr/');
+const rootPages = ['pt.html','eng.html','fr.html','enviado.html','sent.html','envoye.html'];
+app.get(rootPages.map(p => '/' + p), (req,res,next)=>{
+  const filePath = path.join(__dirname, req.path.slice(1));
+  if(fs.existsSync(filePath)) return res.sendFile(filePath);
   next();
 });
 
 // -----------------------------
-// Serve HTML files without extension
-// Root-level HTML files
+// Serve main language pages
 // -----------------------------
-app.get(['/', '/pt.html', '/eng.html', '/fr.html', '/enviado.html', '/sent.html', '/envoye.html'], (req, res, next) => {
-  let filePath;
-  if (req.path === '/' || req.path === '/pt.html') filePath = path.join(__dirname, 'pt.html');
-  else filePath = path.join(__dirname, req.path.slice(1));
-
-  if (fs.existsSync(filePath)) return res.sendFile(filePath);
-  next();
-});
-
-// -----------------------------
-// Serve language folder main pages
-// -----------------------------
-app.get(['/pt', '/pt/'], (req, res) => {
-  const filePath = path.join(__dirname, 'pt', 'index.html');
-  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+app.get(['/pt','/pt/'], (req,res)=>{
+  const filePath = path.join(__dirname,'pt','index.html');
+  if(fs.existsSync(filePath)) return res.sendFile(filePath);
   res.status(404).send('404: Not Found');
 });
-
-app.get(['/eng', '/eng/'], (req, res) => {
-  const filePath = path.join(__dirname, 'eng', 'vinification.html');
-  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+app.get(['/eng','/eng/'], (req,res)=>{
+  const filePath = path.join(__dirname,'eng','vinification.html');
+  if(fs.existsSync(filePath)) return res.sendFile(filePath);
   res.status(404).send('404: Not Found');
 });
-
-app.get(['/fr', '/fr/'], (req, res) => {
-  const filePath = path.join(__dirname, 'fr', 'vinification.html');
-  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+app.get(['/fr','/fr/'], (req,res)=>{
+  const filePath = path.join(__dirname,'fr','vinification.html');
+  if(fs.existsSync(filePath)) return res.sendFile(filePath);
   res.status(404).send('404: Not Found');
 });
 
 // -----------------------------
-// Serve any page inside language folders
+// Serve pages inside language folders
+// Example: /pt/sobre_nos → /pt/sobre_nos.html
 // -----------------------------
-app.get('/:lang/:page', (req, res, next) => {
-  const langFolders = ['pt', 'eng', 'fr'];
-  const { lang, page } = req.params;
-  if (!langFolders.includes(lang)) return next();
-
-  const filePath = path.join(__dirname, lang, `${page}.html`);
-  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+app.get('/:lang/:page', (req,res,next)=>{
+  const {lang,page} = req.params;
+  const langFolders = ['pt','eng','fr'];
+  if(!langFolders.includes(lang)) return next();
+  const filePath = path.join(__dirname,lang,`${page}.html`);
+  if(fs.existsSync(filePath)) return res.sendFile(filePath);
   next();
 });
 
 // -----------------------------
 // Form handler
 // -----------------------------
-app.post('/submit-form', async (req, res) => {
-  const { lang = 'pt', name = '', email = '', message = '' } = req.body;
+app.post('/submit-form', async (req,res)=>{
+  const { lang='pt', name='', email='', message='' } = req.body;
   const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
-  fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => {
-    if (err) console.error('❌ Error writing submissions.txt:', err);
+  fs.appendFile(path.join(__dirname,'submissions.txt'),logLine,err=>{
+    if(err) console.error('❌ Error writing submissions.txt:',err);
   });
 
-  const recipients = process.env.NOTIFY_TO.split(',').map(e => e.trim());
-  try {
-    for (const to of recipients) {
+  const recipients = process.env.NOTIFY_TO.split(',').map(e=>e.trim());
+  try{
+    for(const to of recipients){
       await sendEmail(
         to,
         `New message from site (${lang.toUpperCase()})`,
         `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}`
       );
     }
-  } catch (err) {
-    console.error('❌ Gmail API send error:', err);
-  }
+  }catch(err){ console.error('❌ Gmail API send error:',err); }
 
   // Redirect to root-level confirmation pages
-  if (lang === 'pt') return res.redirect('/enviado');
-  if (lang === 'fr') return res.redirect('/envoye');
-  if (lang === 'eng') return res.redirect('/sent');
+  if(lang==='pt') return res.redirect('/enviado');
+  if(lang==='fr') return res.redirect('/envoye');
+  if(lang==='eng') return res.redirect('/sent');
   res.redirect('/');
 });
 
 // -----------------------------
 // 404 fallback
 // -----------------------------
-app.use((req, res) => res.status(404).send('404: Not Found'));
+app.use((req,res)=>res.status(404).send('404: Not Found'));
 
 // -----------------------------
 // Start server
 // -----------------------------
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running at http://0.0.0.0:${PORT}`);
-});
+app.listen(PORT,'0.0.0.0',()=>console.log(`✅ Server running at http://0.0.0.0:${PORT}`));
