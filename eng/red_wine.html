@@ -1,0 +1,173 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<link rel="preload" href="../images/bk.mp4" as="video">
+		
+
+<!-- optionally: noscript fallback to the static image -->
+<noscript>
+  <div class="bg-image-fallback"></div>
+</noscript>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main_T.css" />
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+		<video id="bg-video" autoplay muted loop playsinline preload="auto" poster="../images/bk.jpg">
+  <!-- include both webm & mp4 for best browser coverage -->
+  <source src="../images/bk.mp4" type="video/mp4">
+  <!-- Fallback content for very old browsers -->
+  Your browser does not support the video tag.
+</video>
+
+		<!-- Wrapper -->
+			<div id="wrapper" class="fade-in">
+
+    <!-- Video background -->
+    <div class="bg fixed">
+        <video id="bg-video" autoplay muted loop playsinline>
+            <source src="../../images/bk.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <!-- Optional overlay -->
+        <div class="overlay"></div>
+    </div>
+
+				<!-- Intro -->
+					<div id="intro" class>
+						<img src="../images/logo_w.svg" alt="Quinta Outeiro da Serva" />
+						<ul class="actions">
+							<li><a href="#nav" class="button icon solid solo fa-arrow-down scrolly">Continue</a></li>
+						</ul>
+					</div>
+
+
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="vinification.html">Vinification</a></li>
+							<li><a href="enotourism.html#nav">Enotourism</a></li>
+							<li><a href="about_us.html#nav">About Us</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="out_facebook.html" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
+							<li><a href="out_instagram.html" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Post -->
+<h2>Our Red Wines</h2>
+									<p><span class="image left"><img src="../images/vint.jpg" alt="" /></span>With its grapes hand-picked and vinified following the traditional process, our red wine echoes generations of trial and error, culminating in a product that mirrors all the knowledge acquired through history allied with the modern refinement.  
+<br /><br/>In our vineyards we have planted the Aragonez variety, the Baga variety and the Maria Gomes variety - also known as Fernão Pires - which allows us to make a wide variety of wines.
+<br />
+<br /> In addition to winemaking, we also store part of the red wine production for aging in French oak or American oak barrels.
+<br />
+<br />These wines have the ideal profile to accompany red meat dishes, aged cheeses or even game dishes, providing a rich and complex taste experience. We specifically recommend our Duas Castas red wine, with its aging in French oak barrels, to accompany a pork loin or veal in the oven. 
+<br /><br /><br />
+<b>We currently have the following red wines available for sale:
+ </b> <br />
+<b>•</b> Aragonez + Baga Red Wine 2023, with 9 months of aging in French oak<br /> 
+<b>•</b> Aragonez + Baga + Maria Gomes Red Wine 2023, with 9 months of aging in French oak<br />
+<b>•</b> Aragonez + Baga Red Wine 2024<br />
+
+For more information on prices, you can <a href="table.html#nav">check the table.</a> <br /><br />
+
+																		
+											</div>
+
+					
+
+													
+<ul>
+								
+									</ul>
+									
+									
+				<!-- Footer -->
+					<footer id="footer">
+						<section>
+							<form method="POST" action="/submit-form">
+							<input type="hidden" name="lang" value="eng" />
+							<div class="fields">
+								<div class="field">
+								<label for="name">Name</label>
+								<input type="text" name="name" id="name" required />
+								</div>
+								<div class="field">
+								<label for="email">Email</label>
+								<input type="email" name="email" id="email" required />
+								</div>
+								<div class="field">
+								<label for="message">Message</label>
+								<textarea name="message" id="message" rows="3" required></textarea>
+								</div>
+							</div>
+							<ul class="actions">
+								<li><input type="submit" value="Send message" /></li>
+							</ul>
+							</form>
+						</section>
+						<section class="split contact">
+							<section class="alt">
+								<h3>Address:</h3>
+								<p>Tv. B dos Arrabaldes, Monte Real <br />
+								2425-019, Leiria, Portugal</p>
+							</section>
+							<section>
+								<h3>Phone:</h3>
+								<p><a>+351 918 644 690 or +351 916 288 328</a></p> 
+							</section>
+							<section>
+								<h3>Email:</h3>
+								<p><a>quintaouteirodaserva@gmail.com</a></p>
+							</section>
+							<section>
+								<h3>Language:</h3>
+								<ul class="icons alt">
+									<li><a href="../pt.html" class="button" >PT</a></li>
+									<li><a href="../eng.html" class="button primary disabled">ENG</a></li>
+									<li><a href="../fr.html" class="button">FR</a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+<ul><li>&copy; Guerra&Bento</li><li></a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="../assets/js/jquery.min.js"></script>
+			<script src="../assets/js/jquery.scrollex.min.js"></script>
+			<script src="../assets/js/jquery.scrolly.min.js"></script>
+			<script src="../assets/js/browser.min.js"></script>
+			<script src="../assets/js/breakpoints.min.js"></script>
+			<script src="../assets/js/util.js"></script>
+			<script src="../assets/js/main.js"></script>
+<script>
+  const video = document.getElementById('bg-video');
+
+  // Force load and play
+  video.load();
+
+  // Try to play when ready
+  video.addEventListener('canplay', () => {
+    video.play().catch(err => console.log('Autoplay prevented:', err));
+  });
+
+  // Fallback for mobile Safari
+  document.addEventListener('DOMContentLoaded', () => {
+    video.play().catch(err => console.log('Autoplay prevented:', err));
+  });
+</script>
+	</body>
+</html>

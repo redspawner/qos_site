@@ -1,0 +1,170 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<link rel="preload" href="../images/bk.mp4" as="video">
+		
+
+<!-- optionally: noscript fallback to the static image -->
+<noscript>
+  <div class="bg-image-fallback"></div>
+</noscript>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main_T.css" />
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+		<video id="bg-video" autoplay muted loop playsinline preload="auto" poster="../images/bk.jpg">
+  <!-- include both webm & mp4 for best browser coverage -->
+  <source src="../images/bk.mp4" type="video/mp4">
+  <!-- Fallback content for very old browsers -->
+  Your browser does not support the video tag.
+</video>
+
+		<!-- Wrapper -->
+			<div id="wrapper" class="fade-in">
+
+    <!-- Video background -->
+    <div class="bg fixed">
+        <video id="bg-video" autoplay muted loop playsinline>
+            <source src="../../images/bk.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <!-- Optional overlay -->
+        <div class="overlay"></div>
+    </div>
+
+				<!-- Intro -->
+					<div id="intro" class>
+						<img src="../images/logo_w.svg" alt="Quinta Outeiro da Serva" />
+						<ul class="actions">
+							<li><a href="#nav" class="button icon solid solo fa-arrow-down scrolly">Continue</a></li>
+						</ul>
+					</div>
+
+
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li class="active"><a href="index.html#nav">Vinificação</a></li>
+							<li><a href="enoturismo.html#nav">Enoturismo</a></li>
+							<li><a href="sobre_nos.html#nav">Sobre nós</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="out_facebook.html" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
+							<li><a href="out_instagram.html" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+
+						<!-- Post -->
+<h2>Os nossos Vinhos Brancos</h2>
+									<p><span class="image left"><img src="../images/vinb.jpg" alt="" /></span>Fresco e aromático, o nosso vinho branco constrói sobre todo o potencial da casta Maria Gomes -também conhecida como Fernão Pires- que ao crescer nos nossos solos de Monte Real, alcançou uma monocasta única e equilibrada. 
+<br />
+										<br/> Criado por um processo de fermentação em bica aberta, estes vinhos ganharam uma elegância única que só pode ser atribuída à sinergia da Maria Gomes com o microclima da nossa região. <br /> 
+<br />Estes vinhos são ideais para acompanhar pratos de peixe, marisco ou mesmo uma boa salada, adicionando um toque de frescura e leveza à refeição. 
+<br /> <br /> <br />
+<b>Atualmente temos os seguintes vinhos brancos disponíveis para venda:
+ </b> <br />
+<b>•</b> Vinho Branco Monocasta Maria Gomes 2023<br /> 
+<b>•</b> Vinho Branco Monocasta Maria Gomes 2024<br />
+
+Para informações sobre preços pode <a href="tabela.html#nav">consultar a tabela.</a> <br /><br />
+
+																		
+											</div>
+
+					
+
+													
+<ul>
+								
+									</ul>
+									
+									
+				<!-- Footer -->
+					<footer id="footer">
+						<section>
+							<form method="POST" action="/submit-form">
+							<input type="hidden" name="lang" value="pt" />
+							<div class="fields">
+								<div class="field">
+								<label for="name">Nome</label>
+								<input type="text" name="name" id="name" required />
+								</div>
+								<div class="field">
+								<label for="email">Email</label>
+								<input type="email" name="email" id="email" required />
+								</div>
+								<div class="field">
+								<label for="message">Mensagem</label>
+								<textarea name="message" id="message" rows="3" required></textarea>
+								</div>
+							</div>
+							<ul class="actions">
+								<li><input type="submit" value="Enviar Mensagem" /></li>
+							</ul>
+							</form>
+						</section>
+						<section class="split contact">
+							<section class="alt">
+								<h3>Morada:</h3>
+								<p>Tv. B dos Arrabaldes, Monte Real <br />
+								2425-019, Leiria, Portugal</p>
+							</section>
+							<section>
+								<h3>Telemóvel:</h3>
+								<p><a>+351 918 644 690 or +351 916 288 328</a></p>
+							</section>
+							<section>
+								<h3>Email:</h3>
+								<p><a>quintaouteirodaserva@gmail.com</a></p>
+							</section>
+							<section>
+								<h3>Idioma:</h3>
+								<ul class="icons alt">
+									<li><a href="../pt.html" class="button primary disabled">PT</a></li>
+									<li><a href="../eng.html" class="button">ENG</a></li>
+									<li><a href="../fr.html" class="button">FR</a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+<ul><li>&copy; Guerra&Bento</li><li></a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="../assets/js/jquery.min.js"></script>
+			<script src="../assets/js/jquery.scrollex.min.js"></script>
+			<script src="../assets/js/jquery.scrolly.min.js"></script>
+			<script src="../assets/js/browser.min.js"></script>
+			<script src="../assets/js/breakpoints.min.js"></script>
+			<script src="../assets/js/util.js"></script>
+			<script src="../assets/js/main.js"></script>
+<script>
+  const video = document.getElementById('bg-video');
+
+  // Force load and play
+  video.load();
+
+  // Try to play when ready
+  video.addEventListener('canplay', () => {
+    video.play().catch(err => console.log('Autoplay prevented:', err));
+  });
+
+  // Fallback for mobile Safari
+  document.addEventListener('DOMContentLoaded', () => {
+    video.play().catch(err => console.log('Autoplay prevented:', err));
+  });
+</script>
+	</body>
+</html>

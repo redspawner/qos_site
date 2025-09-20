@@ -1,0 +1,13 @@
+RewriteEngine On
+
+<FilesMatch "\.mp4$">
+  RemoveType .mp4
+  AddType video/mp4 .mp4
+  ForceType video/mp4
+  Header set Content-Type "video/mp4"
+</FilesMatch>
+
+# Remove .html from URLs
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.html -f
+RewriteRule ^(.*)$ $1.html [L]
