@@ -48,61 +48,67 @@ async function sendEmail(to, subject, text) {
 }
 
 // =====================
-// Redirects middleware
+// 1️⃣ Serve root-level lang.html first: /pt.html, /eng.html, /fr.html
 // =====================
-app.use((req, res, next) => {
-  const langFolders = ['pt', 'eng', 'fr'];
-  const rootPages = ['enviado', 'enoturismo.html', 'sobre_nos.html', 'eng.html', 'fr.html'];
-
-  const pathParts = req.path.split('/').filter(Boolean); // split path into segments
-
-  // 1️⃣ /<lang>/index or /<lang>/index.html → /<lang>/
-  if (langFolders.includes(pathParts[0]) && (pathParts[1] === 'index' || pathParts[1] === 'index.html')) {
-    return res.redirect(301, `/${pathParts[0]}/`);
-  }
-
-  // 2️⃣ Relative links inside lang folder that point to root
-  if (langFolders.includes(pathParts[0]) && rootPages.includes(pathParts[1])) {
-    return res.redirect(301, `/${pathParts[1]}`);
-  }
-
-  // 3️⃣ General .html → extensionless redirect (skip language index and root lang.html)
-  if (req.path.endsWith('.html') && !['pt.html', 'eng.html', 'fr.html'].includes(pathParts[0] + '.html') && pathParts[1] !== 'index') {
-    const filePath = path.join(__dirname, req.path);
-    if (fs.existsSync(filePath)) {
-      const clean = req.path.slice(0, -5); // remove .html
-      return res.redirect(301, clean || '/');
-    }
-  }
-
-  next();
-});
-
-// =====================
-// Serve HTML files
-// =====================
-
-// Serve language index pages: /pt/, /eng/, /fr/
-app.get(['/:lang', '/:lang/'], (req, res, next) => {
-  const lang = req.params.lang;
-  const langFolders = ['pt', 'eng', 'fr'];
-  if (!langFolders.includes(lang)) return next();
-
-  const filePath = path.join(__dirname, lang, 'index.html');
-  if (fs.existsSync(filePath)) {
-    return res.sendFile(filePath);
-  }
-  return res.status(404).send('404: Not Found');
-});
-
-// Serve root-level lang.html files: /pt.html, /eng.html, /fr.html
 app.get(['/pt.html', '/eng.html', '/fr.html'], (req, res, next) => {
   const filePath = path.join(__dirname, req.path);
   if (fs.existsSync(filePath)) return res.sendFile(filePath);
   return next();
 });
 
-// General mapping: /path → /path.html
+// =====================
+// 2️⃣ Redirect /<lang>/index or /<lang>/index.html → /<lang>/
+// 2️⃣ Fix relative root links inside language folders
+// =====================
+app.use((req, res, next) => {
+  const langFolders = ['pt', 'eng', 'fr'];
+  const rootPages = ['enviado', 'enoturismo.html', 'sobre_nos.html', 'eng.html', 'fr.html'];
+
+  const pathParts = req.path.split('/').filter(Boolean);
+
+  // Redirect index pages
+  if (langFolders.includes(pathParts[0]) && (pathParts[1] === 'index' || pathParts[1] === 'index.html')) {
+    return res.redirect(301, `/${pathParts[0]}/`);
+  }
+
+  // Redirect relative links in lang folder that should go to root
+  if (langFolders.includes(pathParts[0]) && rootPages.includes(pathParts[1])) {
+    return res.redirect(301, `/${pathParts[1]}`);
+  }
+
+  next();
+});
+
+// =====================
+// 3️⃣ Serve language index pages: /pt/, /eng/, /fr/
+// =====================
+app.get(['/:lang', '/:lang/'], (req, res, next) => {
+  const langFolders = ['pt', 'eng', 'fr'];
+  const lang = req.params.lang;
+  if (!langFolders.includes(lang)) return next();
+
+  const filePath = path.join(__dirname, lang, 'index.html');
+  if (fs.existsSync(filePath)) return res.sendFile(filePath);
+  return res.status(404).send('404: Not Found');
+});
+
+// =====================
+// 4️⃣ General .html → extensionless redirect for other pages
+// =====================
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html')) {
+    const filePath = path.join(__dirname, req.path);
+    if (fs.existsSync(filePath)) {
+      const clean = req.path.slice(0, -5); // remove .html
+      return res.redirect(301, clean || '/');
+    }
+  }
+  next();
+});
+
+// =====================
+// 5️⃣ Serve all other HTML pages without extension
+// =====================
 app.get(/.*/, (req, res, next) => {
   if (
     req.path.startsWith('/assets') ||
@@ -165,10 +171,14 @@ app.post('/submit-form', async (req, res) => {
   res.redirect('/');
 });
 
+// =====================
 // 404 fallback
+// =====================
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
+// =====================
 // Start server
+// =====================
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running at http://0.0.0.0:${PORT}`);
 });
