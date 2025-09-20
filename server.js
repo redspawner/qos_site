@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 8080;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Serve static assets explicitly
+// Serve static assets
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
@@ -47,15 +47,25 @@ async function sendEmail(to, subject, text) {
   });
 }
 
-// Redirect general .html → extensionless (except /pt/index handled below)
+// =====================
+// 1. Fix /pt/index & /pt/index.html → /pt/
+// 2. Fix relative links under /pt/ pointing to root
+// =====================
 app.use((req, res, next) => {
   // Special redirect: /pt/index.html or /pt/index → /pt/
   if (req.path === '/pt/index.html' || req.path === '/pt/index') {
     return res.redirect(301, '/pt/');
   }
 
-  // General redirect for other .html files
-  if (req.path.endsWith('.html')) {
+  // Fix relative links that incorrectly go under /pt/
+  const rootPages = ['enviado', 'enoturismo.html', 'sobre_nos.html', 'eng.html', 'fr.html'];
+  const pathParts = req.path.split('/').filter(Boolean);
+  if (pathParts[0] === 'pt' && rootPages.includes(pathParts[1])) {
+    return res.redirect(301, '/' + pathParts[1]);
+  }
+
+  // General .html → extensionless redirect, but skip /pt.html
+  if (req.path.endsWith('.html') && req.path !== '/pt.html') {
     const filePath = path.join(__dirname, req.path);
     if (fs.existsSync(filePath)) {
       const clean = req.path.slice(0, -5); // remove .html
@@ -66,7 +76,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve HTML files without extension
+// =====================
+// Serve HTML files
+// =====================
 app.get(/.*/, (req, res, next) => {
   if (
     req.path.startsWith('/assets') ||
@@ -78,11 +90,19 @@ app.get(/.*/, (req, res, next) => {
 
   // Serve /pt/ → pt/index.html
   if (req.path === '/pt' || req.path === '/pt/') {
-    const filePath = path.join(__dirname, 'pt', 'index.html'); // pt/index.html
+    const filePath = path.join(__dirname, 'pt', 'index.html');
     if (fs.existsSync(filePath)) {
       return res.sendFile(filePath);
     } else {
       return res.status(404).send('404: Not Found');
+    }
+  }
+
+  // Serve /pt.html as-is (root-level file)
+  if (req.path === '/pt') {
+    const filePath = path.join(__dirname, 'pt.html');
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
     }
   }
 
@@ -101,7 +121,9 @@ app.get(/.*/, (req, res, next) => {
   return next();
 });
 
+// =====================
 // Form handler
+// =====================
 app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
   console.log('Received submission:', {
