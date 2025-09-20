@@ -1,4 +1,4 @@
-require('dotenv').config(); //comment
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -27,7 +27,6 @@ oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 async function sendEmail(to, subject, text) {
   const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
 
-  // Build raw email message
   const message = [
     `From: ${process.env.OAUTH_USER_EMAIL}`,
     `To: ${to}`,
@@ -36,7 +35,6 @@ async function sendEmail(to, subject, text) {
     text
   ].join('\n');
 
-  // Base64 URL-safe encode
   const encodedMessage = Buffer.from(message)
     .toString('base64')
     .replace(/\+/g, '-')
@@ -49,24 +47,61 @@ async function sendEmail(to, subject, text) {
   });
 }
 
-// Pages
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
-app.get('/pt.html', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
-app.get('/fr.html', (req, res) => res.sendFile(path.join(__dirname, 'fr.html')));
-app.get('/eng.html', (req, res) => res.sendFile(path.join(__dirname, 'eng.html')));
+// --- Redirect .html URLs to extensionless ---
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html')) {
+    const filePath = path.join(__dirname, req.path);
+    if (fs.existsSync(filePath)) {
+      // /index.html → folder
+      if (req.path.endsWith('/index.html')) {
+        const folder = req.path.replace(/\/index\.html$/, '/');
+        return res.redirect(301, folder);
+      }
+      // remove .html
+      const clean = req.path.slice(0, -5);
+      return res.redirect(301, clean || '/');
+    }
+  }
+  next();
+});
+
+// Serve HTML files without extension
+app.get(/.*/, (req, res, next) => {
+  if (
+    req.path.startsWith('/images') ||
+    req.path.includes('.') // skip other static files
+  ) {
+    return next();
+  }
+
+  // Map path → file
+  let filePath;
+  if (req.path === '/' || req.path === '') {
+    filePath = path.join(__dirname, 'pt.html'); // default root
+  } else {
+    filePath = path.join(__dirname, `${req.path}.html`);
+  }
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return next();
+});
 
 // Form handler
 app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
   console.log('Received submission:', { lang, name, email: email ? '[redacted]' : '', message: message ? '[redacted]' : '' });
 
-  // Save to submissions.txt
+  // Save submission
   const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
-  fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => { if (err) console.error('❌ Error writing submissions.txt:', err); });
+  fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => {
+    if (err) console.error('❌ Error writing submissions.txt:', err);
+  });
 
-  // Send email to all recipients
+  // Send email
   const recipients = process.env.NOTIFY_TO.split(',').map(e => e.trim());
-
   try {
     for (const to of recipients) {
       await sendEmail(
@@ -80,11 +115,11 @@ app.post('/submit-form', async (req, res) => {
     console.error('❌ Gmail API send error:', err);
   }
 
-  // Redirect
-  if (lang === 'pt') return res.redirect('/enviado.html');
-  if (lang === 'fr') return res.redirect('/envoye.html');
-  if (lang === 'eng') return res.redirect('/sent.html');
-  res.redirect('/pt.html');
+  // Redirect after form
+  if (lang === 'pt') return res.redirect('/enviado');
+  if (lang === 'fr') return res.redirect('/envoye');
+  if (lang === 'eng') return res.redirect('/sent');
+  res.redirect('/');
 });
 
 // 404
