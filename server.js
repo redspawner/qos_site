@@ -47,16 +47,17 @@ async function sendEmail(to, subject, text) {
 }
 
 // -----------------------------
-// 1️⃣ Serve root-level HTML files
+// 1️⃣ Serve root-level HTML pages
 // -----------------------------
-app.get(['/', '/pt.html', '/eng.html', '/fr.html'], (req, res, next) => {
-  const filePath = req.path === '/' ? path.join(__dirname, 'pt.html') : path.join(__dirname, req.path);
+const rootPages = ['pt.html', 'eng.html', 'fr.html', 'enviado.html', 'sent.html', 'envoye.html'];
+app.get(['/', ...rootPages.map(p => '/' + p)], (req, res, next) => {
+  const filePath = req.path === '/' ? path.join(__dirname, 'pt.html') : path.join(__dirname, req.path.slice(1));
   if (fs.existsSync(filePath)) return res.sendFile(filePath);
   next();
 });
 
 // -----------------------------
-// 2️⃣ Redirect /pt/index.html → /pt/
+// 2️⃣ Redirect language main pages to folder root
 // -----------------------------
 app.use((req, res, next) => {
   if (req.path === '/pt/index.html') return res.redirect(301, '/pt/');
@@ -101,11 +102,11 @@ app.get('/:lang/:page', (req, res, next) => {
 });
 
 // -----------------------------
-// 5️⃣ General .html → extensionless redirect (root-level files)
+// 5️⃣ General .html → extensionless redirect (only for root-level files)
 // -----------------------------
 app.use((req, res, next) => {
   if (req.path.endsWith('.html')) {
-    const filePath = path.join(__dirname, req.path);
+    const filePath = path.join(__dirname, req.path.slice(1));
     if (fs.existsSync(filePath)) {
       const clean = req.path.slice(0, -5);
       return res.redirect(301, clean || '/');
@@ -147,9 +148,10 @@ app.post('/submit-form', async (req, res) => {
     console.error('❌ Gmail API send error:', err);
   }
 
-  if (lang === 'pt') return res.redirect('/pt/enviado');
-  if (lang === 'fr') return res.redirect('/fr/envoye');
-  if (lang === 'eng') return res.redirect('/eng/sent');
+  // ✅ Redirect to root-level confirmation pages
+  if (lang === 'pt') return res.redirect('/enviado');
+  if (lang === 'fr') return res.redirect('/envoye');
+  if (lang === 'eng') return res.redirect('/sent');
   res.redirect('/');
 });
 
