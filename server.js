@@ -52,8 +52,8 @@ app.use((req, res, next) => {
   if (req.path.endsWith('.html')) {
     const filePath = path.join(__dirname, req.path);
     if (fs.existsSync(filePath)) {
-      const clean = req.path.slice(0, -5) || '/';
-      return res.redirect(301, clean);
+      const clean = req.path.slice(0, -5); // remove ".html"
+      return res.redirect(301, clean || '/');
     }
   }
   next();
@@ -71,14 +71,14 @@ app.get('*', (req, res, next) => {
 
   let filePath;
 
-  // Case 1: Root-level file like /pt → pt.html
+  // Case 1: root-level like /pt -> pt.html
   filePath = path.join(__dirname, `${req.path}.html`);
   if (fs.existsSync(filePath)) {
     return res.sendFile(filePath);
   }
 
-  // Case 2: Subfolder with index.html, e.g. /pt/ → /pt/index.html
-  filePath = path.join(__dirname, req.path, 'index.html');
+  // Case 2: subfolder like /pt/vinho_branco -> /pt/vinho_branco.html
+  filePath = path.join(__dirname, `${req.path}.html`);
   if (fs.existsSync(filePath)) {
     return res.sendFile(filePath);
   }
