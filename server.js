@@ -67,4 +67,71 @@ app.use((req, res, next) => {
 // -----------------------------
 // Root HTML pages
 // -----------------------------
-c
+const rootPages = ['pt','eng','fr','enviado','sent','envoye'];
+rootPages.forEach(page => {
+  app.get(`/${page}`, (req,res) => {
+    const filePath = path.join(__dirname, `${page}.html`);
+    if(fs.existsSync(filePath)) return res.sendFile(filePath);
+    res.status(404).send('404: Not Found');
+  });
+});
+
+// -----------------------------
+// Language folder pages
+// -----------------------------
+['pt','eng','fr'].forEach(lang => {
+  app.get(`/${lang}/*`, (req,res,next) => {
+    let filePath = path.join(__dirname, req.path);
+    if(!path.extname(filePath)) filePath += '.html';
+    if(fs.existsSync(filePath)) return res.sendFile(filePath);
+    next();
+  });
+});
+
+// -----------------------------
+// Serve main language pages
+// -----------------------------
+app.get(['/pt','/pt/'], (req,res)=>{
+  const filePath = path.join(__dirname,'pt','index.html');
+  if(fs.existsSync(filePath)) return res.sendFile(filePath);
+  res.status(404).send('404: Not Found');
+});
+
+// -----------------------------
+// Form handler
+// -----------------------------
+app.post('/submit-form', async (req,res)=>{
+  const { lang='pt', name='', email='', message='' } = req.body;
+
+  const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
+  fs.appendFile(path.join(__dirname,'submissions.txt'),logLine,err=>{
+    if(err) console.error('❌ Error writing submissions.txt:',err);
+  });
+
+  const recipients = process.env.NOTIFY_TO.split(',').map(e=>e.trim());
+  try{
+    for(const to of recipients){
+      await sendEmail(
+        to,
+        `New message from site (${lang.toUpperCase()})`,
+        `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}`
+      );
+    }
+  }catch(err){ console.error('❌ Gmail API send error:',err); }
+
+  // Redirect to root-level confirmation pages
+  if(lang==='pt') return res.redirect('/enviado');
+  if(lang==='fr') return res.redirect('/envoye');
+  if(lang==='eng') return res.redirect('/sent');
+  res.redirect('/');
+});
+
+// -----------------------------
+// 404 fallback
+// -----------------------------
+app.use((req,res)=>res.status(404).send('404: Not Found'));
+
+// -----------------------------
+// Start server
+// -----------------------------
+app.listen(PORT,'0.0.0.0',()=>console.log(`✅ Server running at http://0.0.0.0:${PORT}`));
