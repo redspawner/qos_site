@@ -4959,3 +4959,52 @@ body:not(:has(#intro)) #navPanelToggle {
 }
 
 
+
+
+
+
+
+
+
+
+/* Force pagination numbers to remain visible on mobile */
+@media screen and (max-width: 480px) {
+  .pagination .page,
+  .pagination .extra {
+    display: inline-block !important;
+  }
+}
+
+
+
+
+
+@media screen and (max-width: 480px) {
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pagination a, 
+  .pagination span {
+    margin: 0.2rem;
+    min-width: 2.2rem;
+    height: 2.2rem;
+    line-height: 2rem;
+    font-size: 0.75rem;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
