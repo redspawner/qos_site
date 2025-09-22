@@ -4706,6 +4706,115 @@ input, select, textarea {
 			box-shadow: 0 0 1.5rem 0 rgba(0, 0, 0, 0.2);
 			visibility: visible;
 		}
+
+
+
+
+
+
+/* Make the "Menu" toggle bigger / more tappable */
+#navPanelToggle {
+  font-size: 1.75rem;       /* bigger label text */
+  padding: 0.6rem 1.5rem;  /* bigger hit area */
+  border-radius: 0.35rem;  /* optional nicer shape */
+}
+
+/* Make the icon in front of the word bigger */
+#navPanelToggle:before {
+  font-size: 1.5rem;
+  margin-right: 0.6rem;
+}
+
+/* Slightly larger on small screens (adjust values as you like) */
+@media screen and (max-width: 736px) {
+  #navPanelToggle {
+    font-size: 1.05rem;
+    padding: 0.5rem 1.25rem;
+  }
+  #navPanelToggle:before {
+    font-size: 1.05rem;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- Menu item size + tappable area (override after existing rules) --- */
+
+/* Base changes for panel items */
+#navPanel .links li a,
+#navPanel .icons li a {
+  display: block;          /* make entire row clickable */
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 1.55rem;      /* base font size (adjust) */
+  line-height: 1.4;        /* improves readability */
+  padding: 0.9rem 0;       /* vertical tappable area */
+  text-transform: uppercase; /* keep existing style if desired */
+  font-weight: 900;        /* keep bold look (match your theme) */
+}
+
+/* Make sure first/last spacing looks good */
+#navPanel .links li:first-child a { padding-top: 0.9rem; }
+#navPanel .links li:last-child a  { padding-bottom: 0.9rem; }
+
+/* Icons / social links inside panel — slightly smaller but still big enough */
+#navPanel .icons li a {
+  font-size: 1rem;
+  padding: 0.75rem 0;
+}
+
+/* Ensure close button remains comfortable to tap */
+#navPanel .close {
+  height: 4rem;
+  line-height: 4rem;
+  width: 4.5rem;
+}
+
+/* --- Larger sizes for small phones (boost readability) --- */
+@media screen and (max-width: 736px) {
+  #navPanel .links li a {
+    font-size: 1.15rem;   /* larger on phones */
+    padding: 1.1rem 0;    /* bigger tap area */
+  }
+  #navPanel .icons li a {
+    font-size: 1.05rem;
+    padding: 0.95rem 0;
+  }
+}
+
+/* Optional: if previous rules still win, force override (use only if necessary) */
+/*
+#navPanel .links li a,
+#navPanel .icons li a {
+  font-size: 1.05rem !important;
+  padding: 0.9rem 0 !important;
+}
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Prevent intro buttons from disappearing on small screens */
 #intro .actions {
   display: flex !important;
@@ -4764,8 +4873,6 @@ input, select, textarea {
 
 
 
-
-
  /* video background */
  #bg-video {
  position: fixed; 
@@ -4790,5 +4897,65 @@ background-size: cover; background-position: center center; z-index: -1; }
 
 
 
+
+
+
+
+
+
+#intro {
+  position: relative;
+  z-index: 2; /* keep it on top while on screen */
+}
+
+
+#navPanelToggle {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 0;         /* lower than #wrapper / #main */
+  pointer-events: auto;
+}
+
+#bg-video {
+  z-index: -1;
+}
+
+
+
+/* Ensure the intro is a stacking context */
+#intro {
+  position: relative; 
+  z-index: 2; /* above the video */
+  overflow: hidden; /* anything outside will be clipped */
+}
+
+/* Nav toggle */
+#navPanelToggle {
+  position: absolute;  /* absolutely positioned relative to the nearest positioned ancestor (#intro) */
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 3;          /* above intro content */
+  pointer-events: auto;
+}
+
+/* Confine toggle only inside intro using clip-path */
+body:not(:has(#intro)) #navPanelToggle {
+  display: none; /* fallback for non-supporting browsers */
+}
+
+/* Optional: only show on mobile */
+@media screen and (max-width: 980px) {
+  #navPanelToggle {
+    display: block;
+  }
+}
+
+.image.main video {
+  width: 100%;
+  height: auto;        /* maintain aspect ratio */
+  object-fit: cover;   /* crop/scale nicely */
+  display: block;
+}
 
 

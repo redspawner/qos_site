@@ -1,4 +1,3 @@
-
 (function($) {
 
 	var	$window = $(window),
@@ -251,5 +250,22 @@
 			});
 
 		}
+
+	// ✅ Fix: Scroll button only on phones
+	breakpoints.on('<=medium', function() {
+		$('#intro .scrolly').off('click').on('click', function(e) {
+			e.preventDefault(); // stop default jump to #nav
+
+			// Smooth scroll to main content
+			$('html, body').animate({
+				scrollTop: $('#main').offset().top
+			}, 800);
+		});
+	});
+
+	breakpoints.on('>medium', function() {
+		// Restore default scrolly behavior for desktop
+		$('#intro .scrolly').off('click').scrolly();
+	});
 
 })(jQuery);
