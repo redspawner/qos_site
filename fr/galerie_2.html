@@ -38,7 +38,7 @@
 	<body class="is-preload">
 		<video id="bg-video" autoplay muted loop playsinline preload="auto" poster="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/bk.jpg">
   <!-- include both webm & mp4 for best browser coverage -->
-  <source src="" type="video/mp4">
+  <source src="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/bk.mp4" type="video/mp4">
   <!-- Fallback content for very old browsers -->
   Your browser does not support the video tag.
 </video>
@@ -46,6 +46,15 @@
 		<!-- Wrapper -->
 			<div id="wrapper" class="fade-in">
 
+    <!-- Video background -->
+    <div class="bg fixed">
+        <video id="bg-video" autoplay muted loop playsinline>
+            <source src="../https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/bk.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <!-- Optional overlay -->
+        <div class="overlay"></div>
+    </div>
 
 				<!-- Intro -->
 					<div id="intro" class>
@@ -87,14 +96,22 @@
 								</header>
 
 
-<a class="image main">
-  <video autoplay muted loop playsinline>
-    <source src="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/bk.mp4" type="video/mp4">
-    <!-- fallback for older browsers -->
-    <img src="../images/bk.jpg" alt="Quinta Outeiro da Serva">
-  </video>
-</a>
+<div class="box alt">
+										<div class="row gtr-50 gtr-uniform">
+											
+											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/1.JPG" alt="" /></span></div>
+											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/2.JPG" alt="" /></span></div>
+											
+											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/3.JPG" alt="" /></span></div>
+											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/4.JPG" alt="" /></span></div>
 
+											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/5.JPG" alt="" /></span></div>
+											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/6.JPG" alt="" /></span></div>
+											<!-- Break -->
+											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/7.JPG" alt="" /></span></div>
+											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/8.JPG" alt="" /></span></div>
+																				
+										</div>
 
 
 
@@ -106,13 +123,17 @@
 
 																<div class="pagination">
 									<!--<a href="#" class="previous">Prev</a>-->
-									<a href="/fr/galerie#nav" class="page active">1</a>
-									<a href="/fr/galerie_2#nav" class="page">2</a>
+									<a href="/fr/galerie#nav" class="page">1</a>
+									<a href="/fr/galerie_2#nav" class="page active">2</a>
 									<a href="/fr/galerie_3#nav" class="page">3</a>
 									<a href="/fr/galerie_4#nav" class="page">4</a>
 									<a href="/fr/galerie_5#nav" class="page">5</a>
 
-							
+								</div>
+							</footer>
+</div>
+
+								
 							</footer>
 
 					</div>
