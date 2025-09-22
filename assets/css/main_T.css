@@ -4739,7 +4739,34 @@ input, select, textarea {
   }
 }
 
-} /* video background */
+}
+
+
+
+
+
+
+.icons.alt {
+  display: flex;        /* horizontal layout */
+  flex-wrap: nowrap;    /* never wrap to next line */
+  justify-content: flex-start; /* or center if you prefer */
+  gap: 10px;            /* spacing between buttons */
+}
+
+.icons.alt li a.button {
+  white-space: nowrap;  /* prevent text from wrapping inside button */
+  flex-shrink: 1;       /* allow shrinking if needed */
+}
+
+
+
+
+
+
+
+
+
+ /* video background */
  #bg-video {
  position: fixed; 
 top: 0;
@@ -4758,3 +4785,10 @@ display: block; }
 background-size: cover; background-position: center center; z-index: -1; } 
 /* make sure other layout isn't hidden behind z-index quirks */
  #wrapper, #main, #intro { position: relative; z-index: 0; } }
+
+
+
+
+
+
+
