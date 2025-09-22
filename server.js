@@ -1,4 +1,4 @@
-require('dotenv').config(); //comment
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -14,6 +14,9 @@ app.use(express.json());
 // Serve static files
 app.use(express.static(__dirname));
 app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/eng', express.static(__dirname));
+app.use('/pt', express.static(__dirname));
+app.use('/fr', express.static(__dirname));
 
 // OAuth2 setup
 const oAuth2Client = new google.auth.OAuth2(
@@ -27,7 +30,6 @@ oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 async function sendEmail(to, subject, text) {
   const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
 
-  // Build raw email message
   const message = [
     `From: ${process.env.OAUTH_USER_EMAIL}`,
     `To: ${to}`,
@@ -36,7 +38,6 @@ async function sendEmail(to, subject, text) {
     text
   ].join('\n');
 
-  // Base64 URL-safe encode
   const encodedMessage = Buffer.from(message)
     .toString('base64')
     .replace(/\+/g, '-')
@@ -49,7 +50,7 @@ async function sendEmail(to, subject, text) {
   });
 }
 
-// Pages
+// Explicit page routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
 app.get('/pt.html', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
 app.get('/fr.html', (req, res) => res.sendFile(path.join(__dirname, 'fr.html')));
@@ -58,14 +59,11 @@ app.get('/eng.html', (req, res) => res.sendFile(path.join(__dirname, 'eng.html')
 // Form handler
 app.post('/submit-form', async (req, res) => {
   const { lang = 'pt', name = '', email = '', message = '' } = req.body;
-  console.log('Received submission:', { lang, name, email: email ? '[redacted]' : '', message: message ? '[redacted]' : '' });
 
-  // Save to submissions.txt
   const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
-  fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, err => { if (err) console.error('❌ Error writing submissions.txt:', err); });
+  fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, () => {});
 
-  // Send email to all recipients
-  const recipients = process.env.NOTIFY_TO.split(',').map(e => e.trim());
+  const recipients = (process.env.NOTIFY_TO || '').split(',').map(e => e.trim()).filter(Boolean);
 
   try {
     for (const to of recipients) {
@@ -74,21 +72,40 @@ app.post('/submit-form', async (req, res) => {
         `New message from site (${lang.toUpperCase()})`,
         `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}`
       );
-      console.log(`📧 Email sent to ${to}`);
     }
-  } catch (err) {
-    console.error('❌ Gmail API send error:', err);
+  } catch {
+    // fail silently
   }
 
-  // Redirect
   if (lang === 'pt') return res.redirect('/enviado.html');
   if (lang === 'fr') return res.redirect('/envoye.html');
   if (lang === 'eng') return res.redirect('/sent.html');
   res.redirect('/pt.html');
 });
 
+// Catch-all HTML fallback (silent, minimal)
+app.use((req, res, next) => {
+  const reqPathDecoded = decodeURIComponent(req.path || '');
+  const relRequested = reqPathDecoded.replace(/^\/+|\/+$/g, '') || 'pt';
+  const candidates = [
+    path.join(__dirname, relRequested + '.html'),
+    path.join(__dirname, relRequested, 'index.html')
+  ];
+
+  let tried = 0;
+  const tryNext = () => {
+    if (tried >= candidates.length) return next();
+    const candidate = candidates[tried++];
+    fs.access(candidate, fs.constants.R_OK, (err) => {
+      if (err) return tryNext();
+      res.sendFile(candidate);
+    });
+  };
+  tryNext();
+});
+
 // 404
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running at http://0.0.0.0:${PORT}`));
+app.listen(PORT, '0.0.0.0');
