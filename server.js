@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { google } = require('googleapis');
+const favicon = require('serve-favicon'); // 👈 added
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -10,6 +11,9 @@ const PORT = process.env.PORT || 8080;
 // Body parsers
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Favicon middleware
+app.use(favicon(path.join(__dirname, 'images', 'favicon.svg'))); // 👈 serve favicon.svg
 
 // Serve static files
 app.use(express.static(__dirname));
@@ -95,7 +99,7 @@ app.use((req, res, next) => {
   let tried = 0;
   const tryNext = () => {
     if (tried >= candidates.length) return next();
-    const candidate = candidates[tried++];
+    const candidate = candidates[tried++]; 
     fs.access(candidate, fs.constants.R_OK, (err) => {
       if (err) return tryNext();
       res.sendFile(candidate);
