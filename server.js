@@ -77,9 +77,9 @@ app.post('/submit-form', async (req, res) => {
     // fail silently
   }
 
-  if (lang === 'pt') return res.redirect('/enviado.html');
-  if (lang === 'fr') return res.redirect('/envoye.html');
-  if (lang === 'eng') return res.redirect('/sent.html');
+  if (lang === 'pt') return res.redirect('/enviado');
+  if (lang === 'fr') return res.redirect('/envoye');
+  if (lang === 'eng') return res.redirect('/sent');
   res.redirect('/pt.html');
 });
 
