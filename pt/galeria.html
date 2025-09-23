@@ -101,6 +101,7 @@
 
 
 
+
 																	<footer>
 								<div class="pagination">
 									<!--<a href="#" class="previous">Prev</a>-->
@@ -204,6 +205,15 @@
     video.play().catch(err => console.log('Autoplay prevented:', err));
   });
 </script>
+
+<div id="lightbox">
+  <span class="close">&times;</span>
+  <img id="lightbox-img" src="" alt="">
+  <video id="lightbox-video" controls>
+    <source src="" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</div>
 
 	</body>
 </html>
