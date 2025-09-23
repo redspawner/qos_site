@@ -4998,6 +4998,113 @@ body:not(:has(#intro)) #navPanelToggle {
 
 
 
+/* Lightbox overlay */
+#lightbox {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.9);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  cursor: zoom-out;
+}
+
+/* Expanded image */
+#lightbox img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 10px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.7);
+  animation: fadeIn 0.3s ease;
+}
+
+/* Smooth fade-in */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+
+
+
+
+.box.alt .image img {
+  cursor: pointer;         /* Show click hand */
+  pointer-events: auto;    /* Ensure clickable */
+  position: relative;      /* Bring above grid layers */
+  z-index: 1;
+}
+
+
+/* Lightbox overlay */
+#lightbox {
+  display: none; /* hidden by default */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* Image inside lightbox */
+#lightbox img {
+  max-width: 90%;
+  max-height: 80%;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+/* Close button */
+#lightbox .close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 40px;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#lightbox .close:hover {
+  color: #18bfef;
+}
+
+
+
+#lightbox .close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 40px;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+  z-index: 10000; /* make sure it's above the image */
+}
+
+
+/* Lightbox video styling */
+#lightbox video {
+  max-width: 90vw;   /* never wider than the screen */
+  max-height: 90vh;  /* never taller than the screen */
+  width: auto;       /* let browser keep aspect ratio */
+  height: auto;
+  display: block;
+  margin: auto;
+  border-radius: 8px; /* optional: rounded corners */
+  box-shadow: 0 0 20px rgba(0,0,0,0.6); /* optional: subtle shadow */
+}
+
+
+
+
 
 
 
