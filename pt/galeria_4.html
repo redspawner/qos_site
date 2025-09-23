@@ -95,28 +95,21 @@
 
 								</header>
 
+
 <div id="main">
 
-
 <div class="box alt">
-										<div class="row gtr-50 gtr-uniform">
-											
-											
-											<!-- Break -->
-											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/17.JPG" alt="" /></span></div>
-											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/18.JPG" alt="" /></span></div>
-
-											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/19.JPG" alt="" /></span></div>
-											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/20.JPG" alt="" /></span></div>
-
-
-											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/21.JPG" alt="" /></span></div>
-											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/22.JPG" alt="" /></span></div>
-
-											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/23.JPG" alt="" /></span></div>
-											<div class="col-6"><span class="image fit"><img src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/24.JPG" alt="" /></span></div>
-																					
-										</div>
+  <div class="row gtr-50 gtr-uniform">
+    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/17.JPG" alt="" /></span></div>
+    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/18.JPG" alt="" /></span></div>
+    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/19.JPG" alt="" /></span></div>
+    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/20.JPG" alt="" /></span></div>
+    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/21.JPG" alt="" /></span></div>
+    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/22.JPG" alt="" /></span></div>
+    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/23.JPG" alt="" /></span></div>
+    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/24.JPG" alt="" /></span></div>
+  </div>
+</div>
 
 
 
@@ -226,6 +219,13 @@
     video.play().catch(err => console.log('Autoplay prevented:', err));
   });
 </script>
-
+<div id="lightbox">
+  <span class="close">&times;</span>
+  <img id="lightbox-img" src="" alt="">
+  <video id="lightbox-video" controls>
+    <source src="" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</div>
 	</body>
 </html>
