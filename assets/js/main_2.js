@@ -116,6 +116,74 @@
 		});
 	}
 
+
+
+
+
+
+
+
+
+// Select both gallery images and any anchor wrapping a video
+document.querySelectorAll('.box.alt img, a.image.main video').forEach(media => {
+  media.addEventListener('click', () => {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxVideo = document.getElementById('lightbox-video');
+
+    lightbox.style.display = 'flex';
+
+    // Reset states
+    lightboxImg.style.display = 'none';
+    lightboxVideo.style.display = 'none';
+    lightboxVideo.pause();
+
+    let src = media.getAttribute('src');
+
+    // If it's a <video>, grab its <source>
+    if (media.tagName.toLowerCase() === 'video') {
+      const source = media.querySelector('source');
+      if (source) src = source.getAttribute('src');
+    }
+
+    if (src.endsWith('.mp4')) {
+      // Show video
+      lightboxVideo.querySelector('source').src = src;
+      lightboxVideo.load();
+      lightboxVideo.style.display = 'block';
+    } else {
+      // Show image
+      lightboxImg.src = src;
+      lightboxImg.style.display = 'block';
+    }
+  });
+});
+
+// Close button
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('close')) {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxVideo = document.getElementById('lightbox-video');
+
+    lightbox.style.display = 'none';
+    lightboxVideo.pause();
+  }
+});
+
+// Close when clicking the background
+document.getElementById('lightbox').addEventListener('click', (e) => {
+  if (e.target.id === 'lightbox') {
+    e.currentTarget.style.display = 'none';
+    document.getElementById('lightbox-video').pause();
+  }
+});
+
+
+
+
+
+
+	
 	// ✅ Mobile-only smooth scroll fix for .scrolly
 	breakpoints.on('<=medium', function() {
 		$('#intro .scrolly').off('click').on('click', function(e) {
