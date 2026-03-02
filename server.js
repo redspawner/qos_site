@@ -22,6 +22,23 @@ app.use('/eng', express.static(__dirname));
 app.use('/pt', express.static(__dirname));
 app.use('/fr', express.static(__dirname));
 
+app.get('/qr', (req, res) => {
+  const timestamp = new Date().toISOString();
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  
+  const logLine = `${timestamp} — [QR VISIT] — IP: ${ip}\n`;
+
+  // Grava no ficheiro de texto
+  fs.appendFile(path.join(__dirname, 'qr.txt'), logLine, () => {});
+
+  // Envia o ficheiro qr.html (onde tens o teu redirect de 3s)
+  res.sendFile(path.join(__dirname, 'qr.html'));
+});
+
+// Form handler
+app.post('/submit-form', async (req, res) => {
+
+
 // OAuth2 setup
 const oAuth2Client = new google.auth.OAuth2(
   process.env.OAUTH_CLIENT_ID,
