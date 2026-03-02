@@ -6,20 +6,15 @@ const { google } = require('googleapis');
 const favicon = require('serve-favicon');
 
 const app = express();
-app.set('trust proxy', true);
-
 const PORT = process.env.PORT || 8080;
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
+// Memórias temporárias (Limpas automaticamente)
 const mensagensRecentes = new Set();
-const hitCounter = new Map();
+const hitCounter = new Map(); // Para o limite de velocidade (Tática 1)
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-// --- 1. ASSETS ESTÁTICOS NO TOPO (Garante que nunca há Tela Azul) ---
-app.use('/assets', express.static(path.join(__dirname, 'assets')));
-app.use('/images', express.static(path.join(__dirname, 'images')));
 
 if (fs.existsSync(path.join(__dirname, 'images', 'favicon.svg'))) {
     app.use(favicon(path.join(__dirname, 'images', 'favicon.svg')));
@@ -42,61 +37,96 @@ async function appendToSheet(sheetName, values) {
             valueInputOption: 'USER_ENTERED',
             requestBody: { values: [values] },
         });
-    } catch (err) {}
+    } catch (err) {
+        console.error(`Erro Sheets (${sheetName}):`, err.message);
+    }
 }
 
-// --- 2. O ESPIÃO DE ESTATÍSTICAS ---
-app.use((req, res, next) => {
-    if (req.method !== 'GET') return next();
-    if (req.path.startsWith('/assets') || req.path.startsWith('/images') || req.path.match(/\.(css|js|png|jpg|jpeg|gif|svg|mp4|webm|ico)$/)) {
-        return next(); 
-    }
-
+// --- FUNÇÃO EXTRATORA COM DUPLA PROTEÇÃO ANTI-BOT ---
+async function registarVisita(req, acao) {
     try {
-        let ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Desconhecido';
-        if (ip.includes(',')) ip = ip.split(',')[0].trim();
-
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Desconhecido';
         const userAgent = req.headers['user-agent'] || 'Desconhecido';
-        const isBot = /bot|crawl|spider|facebookexternalhit|whatsapp|preview/i.test(userAgent);
+
+        // 1. Bloqueio por palavras-chave (Opção 1)
+        const isBot = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|preview|link|fetch/i.test(userAgent);
+        if (isBot) return;
+
+        // 2. Limite de velocidade por IP (Tática 1 - Máx 6 cliques/10seg)
+        const nowMs = Date.now();
+        const userHits = hitCounter.get(ip) || [];
+        const recentHits = userHits.filter(timestamp => nowMs - timestamp < 10000);
         
-        if (!isBot) {
-            const nowMs = Date.now();
-            const userHits = hitCounter.get(ip) || [];
-            const recentHits = userHits.filter(ts => nowMs - ts < 10000);
-            
-            if (recentHits.length <= 8) {
-                recentHits.push(nowMs);
-                hitCounter.set(ip, recentHits);
-
-                const now = new Date();
-                const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
-                const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
-                const idioma = (req.headers['accept-language'] || '').split(',')[0];
-                const referer = req.headers['referer'] || 'Acesso Direto';
-                const acao = `VISITA ${req.path}`;
-
-                appendToSheet('Estatisticas', [data, hora, acao, ip, idioma, userAgent, referer]);
-            }
+        if (recentHits.length > 6) {
+            console.log(`[BOT DETECTADO POR VELOCIDADE] IP: ${ip}`);
+            return; 
         }
-    } catch (e) {}
-    next();
+        
+        recentHits.push(nowMs);
+        hitCounter.set(ip, recentHits);
+
+        // Se passar os testes, prepara os dados
+        const now = new Date();
+        const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
+        const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
+        const acceptLang = req.headers['accept-language'] || '';
+        const idioma = acceptLang ? acceptLang.split(',')[0] : 'Desconhecido';
+        const referer = req.headers['referer'] || req.headers['referrer'] || 'Acesso Direto';
+
+        // Grava em segundo plano
+        appendToSheet('Estatisticas', [data, hora, acao, ip, idioma, userAgent, referer]);
+    } catch (err) {
+        console.error('Erro ao registar visita:', err.message);
+    }
+}
+
+// --- ROTAS DE PÁGINAS ---
+app.get('/qr', (req, res) => {
+    registarVisita(req, 'SCAN QR');
+    const qrPath = path.join(__dirname, 'qr.html');
+    fs.existsSync(qrPath) ? res.sendFile(qrPath) : res.redirect('/pt.html');
 });
 
-// --- 3. REDIRECIONAMENTO DA RAIZ ---
 app.get('/', (req, res) => {
-    res.redirect('/pt'); // Envia para a landing page (sem barra)
+    registarVisita(req, 'VISITA HOME');
+    res.sendFile(path.join(__dirname, 'pt.html'));
 });
 
-// --- 4. FORMULÁRIO DE CONTACTO ---
+app.get('/pt.html', (req, res) => {
+    registarVisita(req, 'VISITA (PT)');
+    res.sendFile(path.join(__dirname, 'pt.html'));
+});
+
+app.get('/fr.html', (req, res) => {
+    registarVisita(req, 'VISITA (FR)');
+    res.sendFile(path.join(__dirname, 'fr.html'));
+});
+
+app.get('/eng.html', (req, res) => {
+    registarVisita(req, 'VISITA (ENG)');
+    res.sendFile(path.join(__dirname, 'eng.html'));
+});
+
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use(express.static(__dirname));
+
+// --- FORMULÁRIO ---
+async function sendEmail(to, subject, text) {
+    const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
+    const message = [`From: ${process.env.OAUTH_USER_EMAIL}`, `To: ${to}`, `Subject: ${subject}`, ``, text].join('\n');
+    const encoded = Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return gmail.users.messages.send({ userId: 'me', requestBody: { raw: encoded } });
+}
+
 app.post('/submit-form', (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
-    let ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const urlDestino = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' }[lang] || '/pt.html';
 
-    const urlDestino = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' }[lang] || '/pt';
-    
     const assinatura = `${ip}-${email}-${message}`;
     if (mensagensRecentes.has(assinatura)) return res.redirect(urlDestino);
+
     mensagensRecentes.add(assinatura);
     setTimeout(() => mensagensRecentes.delete(assinatura), 15000);
 
@@ -107,50 +137,27 @@ app.post('/submit-form', (req, res) => {
         const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
         const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
         await appendToSheet('Contactos', [data, hora, lang.toUpperCase(), name, email, message]);
-        
-        const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
         const recipients = (process.env.NOTIFY_TO || '').split(',').map(e => e.trim()).filter(Boolean);
         for (const to of recipients) {
-            const emailBody = [`From: ${process.env.OAUTH_USER_EMAIL}`, `To: ${to}`, `Subject: Mensagem Site - ${lang.toUpperCase()}`, ``, `Nome: ${name}\nEmail: ${email}\nMensagem:\n${message}`].join('\n');
-            const encoded = Buffer.from(emailBody).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-            await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encoded } });
+            await sendEmail(to, `Mensagem Site - ${lang.toUpperCase()}`, `Nome: ${name}\nEmail: ${email}\nMensagem:\n${message}`);
         }
     })().catch(err => console.error("Erro form:", err.message));
 });
 
-// --- 5. O ROTEADOR ABSOLUTO (Fim do conflito Pasta vs Ficheiro) ---
+// --- CATCH-ALL ---
 app.use((req, res, next) => {
-    if (req.method !== 'GET') return next();
-
-    // Ignora rotas que já têm uma extensão (ex: ficheiros estáticos que passaram despercebidos)
-    if (req.path.match(/\.[^/]+$/)) return next();
-
-    let targetPath;
-
-    // A REGRA:
-    // Se o utilizador escreveu uma barra no fim (ex: /pt/ ou /fr/)...
-    if (req.path.endsWith('/')) {
-        // ...ele quer o ficheiro index.html DENTRO dessa pasta.
-        targetPath = path.join(__dirname, req.path, 'index.html');
-    } 
-    // Se NÃO tem barra no fim (ex: /pt ou /fr ou /pt/vinho_tinto)...
-    else {
-        // ...ele quer um ficheiro .html com esse nome exato.
-        targetPath = path.join(__dirname, req.path + '.html');
-    }
-
-    // Verifica se o ficheiro calculado existe fisicamente
-    fs.access(targetPath, fs.constants.R_OK, (err) => {
+    const relRequested = decodeURIComponent(req.path || '').replace(/^\/+|\/+$/g, '') || 'pt';
+    const candidate = path.join(__dirname, relRequested + '.html');
+    fs.access(candidate, fs.constants.R_OK, (err) => {
         if (!err) {
-            // Se existir, entrega-o sem fazer nenhum redirecionamento!
-            return res.sendFile(targetPath);
+            registarVisita(req, `VISITA LINK (/${relRequested})`);
+            return res.sendFile(candidate);
         }
-        // Se não existir, passa para a página 404
         next();
     });
 });
 
-app.use((req, res) => res.status(404).send('404: Página não encontrada'));
+app.use((req, res) => res.status(404).send('404: Not Found'));
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor ativo na porta ${PORT}`);
