@@ -6,6 +6,10 @@ const { google } = require('googleapis');
 const favicon = require('serve-favicon');
 
 const app = express();
+
+// --- ADICIONADO PARA O RAILWAY: Permite ler o IP real e limpo do cliente ---
+app.set('trust proxy', true);
+
 const PORT = process.env.PORT || 8080;
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
@@ -45,7 +49,12 @@ async function appendToSheet(sheetName, values) {
 // --- FUNÇÃO EXTRATORA COM DUPLA PROTEÇÃO ANTI-BOT ---
 async function registarVisita(req, acao) {
     try {
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Desconhecido';
+        // --- ADICIONADO: Extrai apenas o primeiro IP se vier uma lista do proxy ---
+        let ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Desconhecido';
+        if (ip && ip.includes(',')) {
+            ip = ip.split(',')[0].trim();
+        }
+
         const userAgent = req.headers['user-agent'] || 'Desconhecido';
 
         // 1. Bloqueio por palavras-chave (Opção 1)
@@ -80,7 +89,7 @@ async function registarVisita(req, acao) {
     }
 }
 
-// --- ROTAS DE PÁGINAS ---
+// --- ROTAS DE PÁGINAS PRINCIPAIS ---
 app.get('/qr', (req, res) => {
     registarVisita(req, 'SCAN QR');
     const qrPath = path.join(__dirname, 'qr.html');
@@ -109,6 +118,14 @@ app.get('/eng.html', (req, res) => {
 
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
+
+// --- ADICIONADO: ROTAS "ESPIÃS" PARA AS PASTAS ---
+// Registam a visita no Excel e passam o controlo (next) para o express.static tratar dos ficheiros
+app.get('/pt/', (req, res, next) => { registarVisita(req, 'VISITA PASTA (/pt/)'); next(); });
+app.get('/fr/', (req, res, next) => { registarVisita(req, 'VISITA PASTA (/fr/)'); next(); });
+app.get('/eng/', (req, res, next) => { registarVisita(req, 'VISITA PASTA (/eng/)'); next(); });
+
+// O motor mágico que faz as tuas pastas e ficheiros funcionarem nativamente
 app.use(express.static(__dirname));
 
 // --- FORMULÁRIO ---
@@ -121,7 +138,11 @@ async function sendEmail(to, subject, text) {
 
 app.post('/submit-form', (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    
+    // --- ADICIONADO: Limpeza do IP também no formulário ---
+    let ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
+
     const urlDestino = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' }[lang] || '/pt.html';
 
     const assinatura = `${ip}-${email}-${message}`;
