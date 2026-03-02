@@ -1,13 +1,16 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs'); // Mantido apenas para ler o favicon e as páginas HTML
 const { google } = require('googleapis');
 const favicon = require('serve-favicon');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID; // 👈 Variável com o ID do teu Google Sheets
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
+
+// Memória temporária para evitar envios duplicados (Escudo Anti-Duplicação)
+const mensagensRecentes = new Set();
 
 // 1. Middlewares
 app.use(express.urlencoded({ extended: true }));
@@ -36,7 +39,7 @@ async function appendToSheet(sheetName, values) {
         const sheets = google.sheets({ version: 'v4', auth: oAuth2Client });
         await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ID,
-            range: `${sheetName}!A:Z`, // Permite até 26 colunas de forma flexível
+            range: `${sheetName}!A:Z`,
             valueInputOption: 'USER_ENTERED',
             requestBody: { values: [values] },
         });
@@ -71,7 +74,6 @@ async function sendEmail(to, subject, text) {
 // 3. Rota do QR (Registo de acessos)
 app.get('/qr', async (req, res) => {
     try {
-        // Gera a data e a hora separadas no fuso horário local
         const now = new Date();
         const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
         const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
@@ -79,10 +81,6 @@ app.get('/qr', async (req, res) => {
 
         // Grava no Google Sheets (Aba: QR_Logs)
         await appendToSheet('QR_Logs', [data, hora, 'SCAN', ip]);
-
-        // Grava no ficheiro de texto (backup local)
-        const logLine = `${now.toISOString()} — [QR VISIT] — IP: ${ip}\n`;
-        fs.appendFile(path.join(__dirname, 'qr.txt'), logLine, () => {});
 
         // Tenta enviar o qr.html, se não existir, vai para a home
         const qrPath = path.join(__dirname, 'qr.html');
@@ -97,17 +95,34 @@ app.get('/qr', async (req, res) => {
     }
 });
 
-// 5. Rotas de Páginas
+// 4. Rotas de Páginas Explícitas
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
 app.get('/pt.html', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
 app.get('/fr.html', (req, res) => res.sendFile(path.join(__dirname, 'fr.html')));
 app.get('/eng.html', (req, res) => res.sendFile(path.join(__dirname, 'eng.html')));
 
-// 6. Handler do Formulário
+// 5. Handler do Formulário (Com proteção Anti-Duplicação)
 app.post('/submit-form', async (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
-    
-    // Gera a data e a hora separadas no fuso horário local
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+    const redirectMap = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' };
+    const urlDestino = redirectMap[lang] || '/pt.html';
+
+    // Cria uma "assinatura" única baseada no utilizador e na mensagem
+    const assinatura = `${ip}-${email}-${message}`;
+
+    // Bloqueia se a mesma mensagem foi enviada há menos de 15 segundos
+    if (mensagensRecentes.has(assinatura)) {
+        console.log(`Envio duplicado bloqueado para: ${email}`);
+        return res.redirect(urlDestino);
+    }
+
+    // Regista a assinatura e programa a sua limpeza após 15 segundos
+    mensagensRecentes.add(assinatura);
+    setTimeout(() => mensagensRecentes.delete(assinatura), 15000);
+
+    // Prepara as datas
     const now = new Date();
     const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
     const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
@@ -115,12 +130,8 @@ app.post('/submit-form', async (req, res) => {
     // Grava no Google Sheets (Aba: Contactos)
     await appendToSheet('Contactos', [data, hora, lang.toUpperCase(), name, email, message]);
 
-    // Grava no ficheiro de texto (backup local)
-    const logLine = `${now.toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
-    fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, () => {});
-
+    // Envia o Email
     const recipients = (process.env.NOTIFY_TO || '').split(',').map(e => e.trim()).filter(Boolean);
-
     try {
         for (const to of recipients) {
             await sendEmail(
@@ -130,14 +141,13 @@ app.post('/submit-form', async (req, res) => {
             );
         }
     } catch (err) {
-        console.error("Erro ao enviar email:", err);
+        console.error("Erro ao enviar email:", err.message);
     }
 
-    const redirectMap = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' };
-    res.redirect(redirectMap[lang] || '/pt.html');
+    res.redirect(urlDestino);
 });
 
-// 7. Catch-all (Fallback para HTML)
+// 6. Catch-all (Fallback para HTML)
 app.use((req, res, next) => {
     const reqPathDecoded = decodeURIComponent(req.path || '');
     const relRequested = reqPathDecoded.replace(/^\/+|\/+$/g, '') || 'pt';
@@ -149,7 +159,7 @@ app.use((req, res, next) => {
     });
 });
 
-// 404
+// 7. 404
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
 app.listen(PORT, '0.0.0.0', () => {
