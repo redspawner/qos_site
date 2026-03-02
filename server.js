@@ -9,9 +9,9 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
-// Memórias temporárias (Limpas automaticamente)
+// Memórias temporárias (Limpas automaticamente ao reiniciar o server)
 const mensagensRecentes = new Set();
-const hitCounter = new Map(); // Para o limite de velocidade (Tática 1)
+const hitCounter = new Map(); // Para o limite de velocidade (Anti-Bot)
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -42,30 +42,28 @@ async function appendToSheet(sheetName, values) {
     }
 }
 
-// --- FUNÇÃO EXTRATORA COM DUPLA PROTEÇÃO ANTI-BOT ---
+// --- FUNÇÃO DE REGISTO COM DUPLA PROTEÇÃO (BOTS & VELOCIDADE) ---
 async function registarVisita(req, acao) {
     try {
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Desconhecido';
         const userAgent = req.headers['user-agent'] || 'Desconhecido';
 
-        // 1. Bloqueio por palavras-chave (Opção 1)
+        // 1. Bloqueio por palavras-chave (Motores de busca e Scrapers)
         const isBot = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|preview|link|fetch/i.test(userAgent);
         if (isBot) return;
 
-        // 2. Limite de velocidade por IP (Tática 1 - Máx 6 cliques/10seg)
+        // 2. Limite de velocidade (Máx 6 registros a cada 10 segundos por IP)
         const nowMs = Date.now();
         const userHits = hitCounter.get(ip) || [];
         const recentHits = userHits.filter(timestamp => nowMs - timestamp < 10000);
         
         if (recentHits.length > 6) {
-            console.log(`[BOT DETECTADO POR VELOCIDADE] IP: ${ip}`);
-            return; 
+            return; // Ignora o registo se for demasiado rápido
         }
         
         recentHits.push(nowMs);
         hitCounter.set(ip, recentHits);
 
-        // Se passar os testes, prepara os dados
         const now = new Date();
         const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
         const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
@@ -73,14 +71,18 @@ async function registarVisita(req, acao) {
         const idioma = acceptLang ? acceptLang.split(',')[0] : 'Desconhecido';
         const referer = req.headers['referer'] || req.headers['referrer'] || 'Acesso Direto';
 
-        // Grava em segundo plano
+        // Dispara e esquece (Não trava o carregamento do site)
         appendToSheet('Estatisticas', [data, hora, acao, ip, idioma, userAgent, referer]);
     } catch (err) {
         console.error('Erro ao registar visita:', err.message);
     }
 }
 
-// --- ROTAS DE PÁGINAS ---
+// --- ROTAS ESTÁTICAS (Imagens e Assets) ---
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
+// --- ROTAS DE PÁGINAS EXPLÍCITAS ---
 app.get('/qr', (req, res) => {
     registarVisita(req, 'SCAN QR');
     const qrPath = path.join(__dirname, 'qr.html');
@@ -92,26 +94,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'pt.html'));
 });
 
-app.get('/pt.html', (req, res) => {
-    registarVisita(req, 'VISITA (PT)');
-    res.sendFile(path.join(__dirname, 'pt.html'));
-});
-
-app.get('/fr.html', (req, res) => {
-    registarVisita(req, 'VISITA (FR)');
-    res.sendFile(path.join(__dirname, 'fr.html'));
-});
-
-app.get('/eng.html', (req, res) => {
-    registarVisita(req, 'VISITA (ENG)');
-    res.sendFile(path.join(__dirname, 'eng.html'));
-});
-
-app.use('/assets', express.static(path.join(__dirname, 'assets')));
-app.use('/images', express.static(path.join(__dirname, 'images')));
-app.use(express.static(__dirname));
-
-// --- FORMULÁRIO ---
+// --- FORMULÁRIO DE CONTACTO ---
 async function sendEmail(to, subject, text) {
     const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
     const message = [`From: ${process.env.OAUTH_USER_EMAIL}`, `To: ${to}`, `Subject: ${subject}`, ``, text].join('\n');
@@ -130,7 +113,7 @@ app.post('/submit-form', (req, res) => {
     mensagensRecentes.add(assinatura);
     setTimeout(() => mensagensRecentes.delete(assinatura), 15000);
 
-    res.redirect(urlDestino);
+    res.redirect(urlDestino); // Redireciona logo para ser rápido
 
     (async () => {
         const now = new Date();
@@ -144,17 +127,37 @@ app.post('/submit-form', (req, res) => {
     })().catch(err => console.error("Erro form:", err.message));
 });
 
-// --- CATCH-ALL ---
+// --- CATCH-ALL (Suporte a /pt, /pt/, index.html e links truncados) ---
 app.use((req, res, next) => {
-    const relRequested = decodeURIComponent(req.path || '').replace(/^\/+|\/+$/g, '') || 'pt';
-    const candidate = path.join(__dirname, relRequested + '.html');
-    fs.access(candidate, fs.constants.R_OK, (err) => {
-        if (!err) {
-            registarVisita(req, `VISITA LINK (/${relRequested})`);
-            return res.sendFile(candidate);
-        }
-        next();
-    });
+    const reqPathDecoded = decodeURIComponent(req.path || '');
+    // Remove as barras das pontas para análise (Ex: /pt/ vira pt)
+    let relRequested = reqPathDecoded.replace(/^\/+|\/+$/g, '');
+
+    // Se o pedido for vazio ou apenas "/", assume "pt"
+    if (relRequested === '') relRequested = 'pt';
+
+    const directFile = path.join(__dirname, relRequested + '.html');
+    const folderIndex = path.join(__dirname, relRequested, 'index.html');
+
+    // 1. Tenta ficheiro direto (pt.html)
+    if (fs.existsSync(directFile) && fs.lstatSync(directFile).isFile()) {
+        registarVisita(req, `VISITA (/${relRequested})`);
+        return res.sendFile(directFile);
+    } 
+
+    // 2. Tenta index dentro de pasta (pt/index.html)
+    if (fs.existsSync(folderIndex)) {
+        registarVisita(req, `VISITA PASTA (/${relRequested}/)`);
+        return res.sendFile(folderIndex);
+    }
+
+    // 3. Fallback final: se nada funcionar mas pedir algo relacionado com "pt", envia a home
+    if (relRequested.startsWith('pt')) {
+        registarVisita(req, 'VISITA HOME (FALLBACK)');
+        return res.sendFile(path.join(__dirname, 'pt.html'));
+    }
+
+    next();
 });
 
 app.use((req, res) => res.status(404).send('404: Not Found'));
