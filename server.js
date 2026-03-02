@@ -6,6 +6,9 @@ const { google } = require('googleapis');
 const favicon = require('serve-favicon');
 
 const app = express();
+// 1. Configurar o Express para confiar no Proxy do Railway (Essencial para apanhar o IP real)
+app.set('trust proxy', true); 
+
 const PORT = process.env.PORT || 8080;
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
@@ -45,14 +48,19 @@ async function appendToSheet(sheetName, values) {
 // --- FUNÇÃO DE REGISTO COM DUPLA PROTEÇÃO (BOTS & VELOCIDADE) ---
 async function registarVisita(req, acao) {
     try {
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Desconhecido';
+        // 2. Capturar e Limpar o IP (Apanha o primeiro da lista se houver vírgulas)
+        let ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Desconhecido';
+        if (ip.includes(',')) {
+            ip = ip.split(',')[0].trim();
+        }
+
         const userAgent = req.headers['user-agent'] || 'Desconhecido';
 
-        // 1. Bloqueio por palavras-chave (Motores de busca e Scrapers)
+        // 3. Bloqueio por palavras-chave (Motores de busca e Scrapers)
         const isBot = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|preview|link|fetch/i.test(userAgent);
         if (isBot) return;
 
-        // 2. Limite de velocidade (Máx 6 registros a cada 10 segundos por IP)
+        // 4. Limite de velocidade (Máx 6 registros a cada 10 segundos por IP)
         const nowMs = Date.now();
         const userHits = hitCounter.get(ip) || [];
         const recentHits = userHits.filter(timestamp => nowMs - timestamp < 10000);
@@ -71,14 +79,14 @@ async function registarVisita(req, acao) {
         const idioma = acceptLang ? acceptLang.split(',')[0] : 'Desconhecido';
         const referer = req.headers['referer'] || req.headers['referrer'] || 'Acesso Direto';
 
-        // Dispara e esquece (Não trava o carregamento do site)
+        // Dispara e esquece para o Google Sheets
         appendToSheet('Estatisticas', [data, hora, acao, ip, idioma, userAgent, referer]);
     } catch (err) {
         console.error('Erro ao registar visita:', err.message);
     }
 }
 
-// --- ROTAS ESTÁTICAS (Imagens e Assets) ---
+// --- ROTAS ESTÁTICAS ---
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
@@ -104,7 +112,10 @@ async function sendEmail(to, subject, text) {
 
 app.post('/submit-form', (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    
+    let ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
+
     const urlDestino = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' }[lang] || '/pt.html';
 
     const assinatura = `${ip}-${email}-${message}`;
@@ -113,7 +124,7 @@ app.post('/submit-form', (req, res) => {
     mensagensRecentes.add(assinatura);
     setTimeout(() => mensagensRecentes.delete(assinatura), 15000);
 
-    res.redirect(urlDestino); // Redireciona logo para ser rápido
+    res.redirect(urlDestino);
 
     (async () => {
         const now = new Date();
@@ -130,28 +141,23 @@ app.post('/submit-form', (req, res) => {
 // --- CATCH-ALL (Suporte a /pt, /pt/, index.html e links truncados) ---
 app.use((req, res, next) => {
     const reqPathDecoded = decodeURIComponent(req.path || '');
-    // Remove as barras das pontas para análise (Ex: /pt/ vira pt)
     let relRequested = reqPathDecoded.replace(/^\/+|\/+$/g, '');
 
-    // Se o pedido for vazio ou apenas "/", assume "pt"
     if (relRequested === '') relRequested = 'pt';
 
     const directFile = path.join(__dirname, relRequested + '.html');
     const folderIndex = path.join(__dirname, relRequested, 'index.html');
 
-    // 1. Tenta ficheiro direto (pt.html)
     if (fs.existsSync(directFile) && fs.lstatSync(directFile).isFile()) {
         registarVisita(req, `VISITA (/${relRequested})`);
         return res.sendFile(directFile);
     } 
 
-    // 2. Tenta index dentro de pasta (pt/index.html)
     if (fs.existsSync(folderIndex)) {
         registarVisita(req, `VISITA PASTA (/${relRequested}/)`);
         return res.sendFile(folderIndex);
     }
 
-    // 3. Fallback final: se nada funcionar mas pedir algo relacionado com "pt", envia a home
     if (relRequested.startsWith('pt')) {
         registarVisita(req, 'VISITA HOME (FALLBACK)');
         return res.sendFile(path.join(__dirname, 'pt.html'));
