@@ -29,7 +29,7 @@ app.get('/qr', (req, res) => {
         const logLine = `${timestamp} — [QR VISIT] — IP: ${ip}\n`;
 
         // Grava no ficheiro de texto (submissions.txt ou acessos_qr.txt)
-        fs.appendFile(path.join(__dirname, 'qr_acessos.txt'), logLine, (err) => {
+        fs.appendFile(path.join(__dirname, 'qr.txt'), logLine, (err) => {
             if (err) console.error("Erro ao gravar log do QR:", err);
         });
 
