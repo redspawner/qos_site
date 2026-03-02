@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const fs = require('fs'); // Mantido apenas para ler o favicon e as páginas HTML
+const fs = require('fs');
 const { google } = require('googleapis');
 const favicon = require('serve-favicon');
 
@@ -71,16 +71,23 @@ async function sendEmail(to, subject, text) {
     });
 }
 
-// 3. Rota do QR (Registo de acessos)
+// 3. Rota do QR (Extraindo o MÁXIMO de informação)
 app.get('/qr', async (req, res) => {
     try {
+        // Datas
         const now = new Date();
         const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
         const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        
+        // Extração de Dados Técnicos
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Desconhecido';
+        const userAgent = req.headers['user-agent'] || 'Desconhecido';
+        const acceptLang = req.headers['accept-language'] || '';
+        const idioma = acceptLang ? acceptLang.split(',')[0] : 'Desconhecido';
+        const referer = req.headers['referer'] || req.headers['referrer'] || 'Scan Direto';
 
         // Grava no Google Sheets (Aba: QR_Logs)
-        await appendToSheet('QR_Logs', [data, hora, 'SCAN', ip]);
+        await appendToSheet('QR_Logs', [data, hora, 'SCAN', ip, idioma, userAgent, referer]);
 
         // Tenta enviar o qr.html, se não existir, vai para a home
         const qrPath = path.join(__dirname, 'qr.html');
