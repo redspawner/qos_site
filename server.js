@@ -7,6 +7,7 @@ const favicon = require('serve-favicon');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID; // 👈 Variável com o ID do teu Google Sheets
 
 // 1. Middlewares
 app.use(express.urlencoded({ extended: true }));
@@ -21,31 +22,7 @@ if (fs.existsSync(path.join(__dirname, 'images', 'favicon.svg'))) {
 app.use(express.static(__dirname));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-// 3. Rota do QR (Registo de acessos)
-app.get('/qr', (req, res) => {
-    try {
-        const timestamp = new Date().toISOString();
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-        const logLine = `${timestamp} — [QR VISIT] — IP: ${ip}\n`;
-
-        // Grava no ficheiro de texto (submissions.txt ou acessos_qr.txt)
-        fs.appendFile(path.join(__dirname, 'qr.txt'), logLine, (err) => {
-            if (err) console.error("Erro ao gravar log do QR:", err);
-        });
-
-        // Tenta enviar o qr.html, se não existir, vai para a home
-        const qrPath = path.join(__dirname, 'qr.html');
-        if (fs.existsSync(qrPath)) {
-            res.sendFile(qrPath);
-        } else {
-            res.redirect('/pt');
-        }
-    } catch (e) {
-        res.redirect('/pt');
-    }
-});
-
-// 4. Configuração Email (OAuth2)
+// --- CONFIGURAÇÃO GOOGLE AUTH ---
 const oAuth2Client = new google.auth.OAuth2(
     process.env.OAUTH_CLIENT_ID,
     process.env.OAUTH_CLIENT_SECRET,
@@ -53,6 +30,22 @@ const oAuth2Client = new google.auth.OAuth2(
 );
 oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 
+// --- FUNÇÃO PARA ESCREVER NO GOOGLE SHEETS ---
+async function appendToSheet(sheetName, values) {
+    try {
+        const sheets = google.sheets({ version: 'v4', auth: oAuth2Client });
+        await sheets.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${sheetName}!A:Z`, // Permite até 26 colunas de forma flexível
+            valueInputOption: 'USER_ENTERED',
+            requestBody: { values: [values] },
+        });
+    } catch (err) {
+        console.error(`Erro ao gravar na aba ${sheetName}:`, err.message);
+    }
+}
+
+// --- FUNÇÃO PARA ENVIAR EMAIL ---
 async function sendEmail(to, subject, text) {
     const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
     const message = [
@@ -75,6 +68,35 @@ async function sendEmail(to, subject, text) {
     });
 }
 
+// 3. Rota do QR (Registo de acessos)
+app.get('/qr', async (req, res) => {
+    try {
+        // Gera a data e a hora separadas no fuso horário local
+        const now = new Date();
+        const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
+        const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+        // Grava no Google Sheets (Aba: QR_Logs)
+        await appendToSheet('QR_Logs', [data, hora, 'SCAN', ip]);
+
+        // Grava no ficheiro de texto (backup local)
+        const logLine = `${now.toISOString()} — [QR VISIT] — IP: ${ip}\n`;
+        fs.appendFile(path.join(__dirname, 'qr.txt'), logLine, () => {});
+
+        // Tenta enviar o qr.html, se não existir, vai para a home
+        const qrPath = path.join(__dirname, 'qr.html');
+        if (fs.existsSync(qrPath)) {
+            res.sendFile(qrPath);
+        } else {
+            res.redirect('/pt');
+        }
+    } catch (e) {
+        console.error("Erro na rota /qr:", e);
+        res.redirect('/pt');
+    }
+});
+
 // 5. Rotas de Páginas
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
 app.get('/pt.html', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
@@ -84,8 +106,17 @@ app.get('/eng.html', (req, res) => res.sendFile(path.join(__dirname, 'eng.html')
 // 6. Handler do Formulário
 app.post('/submit-form', async (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
-    const logLine = `${new Date().toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
     
+    // Gera a data e a hora separadas no fuso horário local
+    const now = new Date();
+    const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
+    const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
+    
+    // Grava no Google Sheets (Aba: Contactos)
+    await appendToSheet('Contactos', [data, hora, lang.toUpperCase(), name, email, message]);
+
+    // Grava no ficheiro de texto (backup local)
+    const logLine = `${now.toISOString()} — [${lang}] ${name} <${email}>: ${message}\n`;
     fs.appendFile(path.join(__dirname, 'submissions.txt'), logLine, () => {});
 
     const recipients = (process.env.NOTIFY_TO || '').split(',').map(e => e.trim()).filter(Boolean);
