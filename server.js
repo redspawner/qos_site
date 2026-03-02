@@ -6,6 +6,7 @@ const { google } = require('googleapis');
 const favicon = require('serve-favicon');
 
 const app = express();
+// Essencial para obteres os IPs limpos
 app.set('trust proxy', true);
 
 const PORT = process.env.PORT || 8080;
@@ -16,6 +17,10 @@ const hitCounter = new Map();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// --- 1. ASSETS ESTÁTICOS (Sempre servidos primeiro para evitar tela azul) ---
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 
 if (fs.existsSync(path.join(__dirname, 'images', 'favicon.svg'))) {
     app.use(favicon(path.join(__dirname, 'images', 'favicon.svg')));
@@ -38,14 +43,11 @@ async function appendToSheet(sheetName, values) {
             valueInputOption: 'USER_ENTERED',
             requestBody: { values: [values] },
         });
-    } catch (err) {
-        console.error(`Erro Sheets:`, err.message);
-    }
+    } catch (err) {}
 }
 
-// --- 1. O "ESPIÃO" DE ESTATÍSTICAS (Regista sem interferir nas pastas) ---
+// --- ESPIÃO DE ESTATÍSTICAS ---
 app.use((req, res, next) => {
-    // Ignora ficheiros de sistema, imagens, css, js para não poluir o Excel
     if (req.method !== 'GET') return next();
     if (req.path.startsWith('/assets') || req.path.startsWith('/images') || req.path.match(/\.(css|js|png|jpg|jpeg|gif|svg|mp4|webm|ico)$/)) {
         return next(); 
@@ -74,29 +76,25 @@ app.use((req, res, next) => {
                 const referer = req.headers['referer'] || 'Acesso Direto';
                 const acao = `VISITA ${req.path}`;
 
-                // Grava no Excel em background
                 appendToSheet('Estatisticas', [data, hora, acao, ip, idioma, userAgent, referer]);
             }
         }
-    } catch (e) {
-        console.error('Erro tracking:', e.message);
-    }
-
-    // PASSA O CONTROLO PARA O MOTOR NORMAL DO EXPRESS (Isto é o que resolve o teu problema)
+    } catch (e) {}
     next();
 });
 
-// --- 2. ROTAS DIRETAS ---
+// --- ROTAS BASE ---
 app.get('/', (req, res) => {
-    res.redirect('/pt/'); // Adapta para '/pt' se a tua home principal não for uma pasta
+    res.redirect('/pt'); // Apenas /pt, sem barra final
 });
 
+// --- FORMULÁRIO ---
 app.post('/submit-form', (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
     let ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
 
-    const urlDestino = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' }[lang] || '/pt/';
+    const urlDestino = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' }[lang] || '/pt';
     
     const assinatura = `${ip}-${email}-${message}`;
     if (mensagensRecentes.has(assinatura)) return res.redirect(urlDestino);
@@ -121,16 +119,42 @@ app.post('/submit-form', (req, res) => {
     })().catch(err => console.error("Erro form:", err.message));
 });
 
-// --- 3. O MOTOR NATURAL DO EXPRESS (Substitui o Catch-all que estragou tudo) ---
-// Ele procura os ficheiros automaticamente. Se pedires /pt, ele entrega pt.html. 
-// Se pedires /pt/, ele vai à pasta pt e entrega o index.html. 
-// O CSS (com ou sem ../) voltará a funcionar nativamente.
-app.use(express.static(__dirname, {
-    extensions: ['html'],
-    index: 'index.html'
-}));
+// --- O ROTEADOR EXATO (Resolve todos os problemas de 404 e pastas) ---
+app.use((req, res, next) => {
+    if (req.method !== 'GET') return next();
 
-// Se nada for encontrado (404)
+    // Verifica se o utilizador digitou a barra final no URL (ex: /pt/ ou /fr/)
+    const isTrailingSlash = req.path.endsWith('/');
+    
+    // Tira as barras para sabermos o nome limpo da língua/página (ex: "fr" ou "eng")
+    const cleanPath = req.path.replace(/^\/+|\/+$/g, '');
+
+    // 1. O utilizador pediu uma PASTA (tem barra no fim)
+    if (isTrailingSlash) {
+        const folderIndex = path.join(__dirname, cleanPath, 'index.html');
+        if (fs.existsSync(folderIndex)) {
+            return res.sendFile(folderIndex);
+        }
+    } 
+    // 2. O utilizador pediu uma PÁGINA (não tem barra no fim)
+    else {
+        // Tenta encontrar o ficheiro na raiz (ex: fr.html, eng.html)
+        const rootFile = path.join(__dirname, cleanPath + '.html');
+        if (fs.existsSync(rootFile)) {
+            return res.sendFile(rootFile);
+        }
+        
+        // Tenta encontrar subpáginas (ex: /pt/vinho_tinto -> /pt/vinho_tinto.html)
+        const subPageFile = path.join(__dirname, cleanPath + '.html');
+        if (fs.existsSync(subPageFile)) {
+             return res.sendFile(subPageFile);
+        }
+    }
+
+    // Se chegou aqui, a página não existe
+    next();
+});
+
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
 app.listen(PORT, '0.0.0.0', () => {
