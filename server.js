@@ -9,8 +9,9 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
-// Memória temporária para evitar envios duplicados no formulário
+// Memórias temporárias (Limpas automaticamente)
 const mensagensRecentes = new Set();
+const hitCounter = new Map(); // Para o limite de velocidade (Tática 1)
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -27,7 +28,6 @@ const oAuth2Client = new google.auth.OAuth2(
 );
 oAuth2Client.setCredentials({ refresh_token: process.env.OAUTH_REFRESH_TOKEN });
 
-// --- FUNÇÃO PARA ESCREVER NO GOOGLE SHEETS ---
 async function appendToSheet(sheetName, values) {
     try {
         const sheets = google.sheets({ version: 'v4', auth: oAuth2Client });
@@ -38,49 +38,53 @@ async function appendToSheet(sheetName, values) {
             requestBody: { values: [values] },
         });
     } catch (err) {
-        console.error(`Erro ao gravar na aba ${sheetName}:`, err.message);
+        console.error(`Erro Sheets (${sheetName}):`, err.message);
     }
 }
 
-// --- FUNÇÃO PARA ENVIAR EMAIL ---
-async function sendEmail(to, subject, text) {
-    const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
-    const message = [
-        `From: ${process.env.OAUTH_USER_EMAIL}`,
-        `To: ${to}`,
-        `Subject: ${subject}`,
-        ``,
-        text
-    ].join('\n');
-
-    const encodedMessage = Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    return gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedMessage } });
-}
-
-// --- FUNÇÃO EXTRATORA DE ESTATÍSTICAS (Roda em segundo plano) ---
+// --- FUNÇÃO EXTRATORA COM DUPLA PROTEÇÃO ANTI-BOT ---
 async function registarVisita(req, acao) {
     try {
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Desconhecido';
+        const userAgent = req.headers['user-agent'] || 'Desconhecido';
+
+        // 1. Bloqueio por palavras-chave (Opção 1)
+        const isBot = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|preview|link|fetch/i.test(userAgent);
+        if (isBot) return;
+
+        // 2. Limite de velocidade por IP (Tática 1 - Máx 6 cliques/10seg)
+        const nowMs = Date.now();
+        const userHits = hitCounter.get(ip) || [];
+        const recentHits = userHits.filter(timestamp => nowMs - timestamp < 10000);
+        
+        if (recentHits.length > 6) {
+            console.log(`[BOT DETECTADO POR VELOCIDADE] IP: ${ip}`);
+            return; 
+        }
+        
+        recentHits.push(nowMs);
+        hitCounter.set(ip, recentHits);
+
+        // Se passar os testes, prepara os dados
         const now = new Date();
         const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
         const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
-        
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Desconhecido';
-        const userAgent = req.headers['user-agent'] || 'Desconhecido';
         const acceptLang = req.headers['accept-language'] || '';
         const idioma = acceptLang ? acceptLang.split(',')[0] : 'Desconhecido';
         const referer = req.headers['referer'] || req.headers['referrer'] || 'Acesso Direto';
 
-        await appendToSheet('Estatisticas', [data, hora, acao, ip, idioma, userAgent, referer]);
+        // Grava em segundo plano
+        appendToSheet('Estatisticas', [data, hora, acao, ip, idioma, userAgent, referer]);
     } catch (err) {
         console.error('Erro ao registar visita:', err.message);
     }
 }
 
-// --- ROTAS DE PÁGINAS (Sem 'await' = Resposta Instantânea) ---
+// --- ROTAS DE PÁGINAS ---
 app.get('/qr', (req, res) => {
-    registarVisita(req, 'SCAN QR'); // Fica a gravar em segundo plano
+    registarVisita(req, 'SCAN QR');
     const qrPath = path.join(__dirname, 'qr.html');
-    fs.existsSync(qrPath) ? res.sendFile(qrPath) : res.redirect('/pt');
+    fs.existsSync(qrPath) ? res.sendFile(qrPath) : res.redirect('/pt.html');
 });
 
 app.get('/', (req, res) => {
@@ -103,58 +107,50 @@ app.get('/eng.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'eng.html'));
 });
 
-// --- FICHEIROS ESTÁTICOS ---
-app.use(express.static(__dirname));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use(express.static(__dirname));
 
-// --- FORMULÁRIO DE CONTACTO (Resposta Instantânea) ---
+// --- FORMULÁRIO ---
+async function sendEmail(to, subject, text) {
+    const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
+    const message = [`From: ${process.env.OAUTH_USER_EMAIL}`, `To: ${to}`, `Subject: ${subject}`, ``, text].join('\n');
+    const encoded = Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return gmail.users.messages.send({ userId: 'me', requestBody: { raw: encoded } });
+}
+
 app.post('/submit-form', (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const urlDestino = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' }[lang] || '/pt.html';
 
-    const redirectMap = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' };
-    const urlDestino = redirectMap[lang] || '/pt.html';
-
-    // 1. Verifica duplicação
     const assinatura = `${ip}-${email}-${message}`;
-    if (mensagensRecentes.has(assinatura)) {
-        return res.redirect(urlDestino);
-    }
+    if (mensagensRecentes.has(assinatura)) return res.redirect(urlDestino);
 
     mensagensRecentes.add(assinatura);
     setTimeout(() => mensagensRecentes.delete(assinatura), 15000);
 
-    // 2. REDIRECIONA O CLIENTE IMEDIATAMENTE (O site fica super rápido)
     res.redirect(urlDestino);
 
-    // 3. Processa e-mails e Google Sheets em segundo plano
     (async () => {
-        try {
-            const now = new Date();
-            const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
-            const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
-            
-            await appendToSheet('Contactos', [data, hora, lang.toUpperCase(), name, email, message]);
-
-            const recipients = (process.env.NOTIFY_TO || '').split(',').map(e => e.trim()).filter(Boolean);
-            for (const to of recipients) {
-                await sendEmail(to, `Mensagem Site - ${lang.toUpperCase()}`, `Nome: ${name}\nEmail: ${email}\nMensagem:\n${message}`);
-            }
-        } catch (err) {
-            console.error("Erro ao processar formulário:", err.message);
+        const now = new Date();
+        const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
+        const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
+        await appendToSheet('Contactos', [data, hora, lang.toUpperCase(), name, email, message]);
+        const recipients = (process.env.NOTIFY_TO || '').split(',').map(e => e.trim()).filter(Boolean);
+        for (const to of recipients) {
+            await sendEmail(to, `Mensagem Site - ${lang.toUpperCase()}`, `Nome: ${name}\nEmail: ${email}\nMensagem:\n${message}`);
         }
-    })();
+    })().catch(err => console.error("Erro form:", err.message));
 });
 
-// --- CATCH-ALL (Acessos genéricos, fallback) ---
+// --- CATCH-ALL ---
 app.use((req, res, next) => {
-    const reqPathDecoded = decodeURIComponent(req.path || '');
-    const relRequested = reqPathDecoded.replace(/^\/+|\/+$/g, '') || 'pt';
+    const relRequested = decodeURIComponent(req.path || '').replace(/^\/+|\/+$/g, '') || 'pt';
     const candidate = path.join(__dirname, relRequested + '.html');
-
     fs.access(candidate, fs.constants.R_OK, (err) => {
         if (!err) {
-            registarVisita(req, `VISITA LINK (/${relRequested})`); // Segundo plano
+            registarVisita(req, `VISITA LINK (/${relRequested})`);
             return res.sendFile(candidate);
         }
         next();
@@ -164,5 +160,5 @@ app.use((req, res, next) => {
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor a correr na porta ${PORT}`);
+    console.log(`Servidor ativo na porta ${PORT}`);
 });
