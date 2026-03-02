@@ -9,21 +9,15 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 
-// Memória temporária para evitar envios duplicados (Escudo Anti-Duplicação)
+// Memória temporária para evitar envios duplicados no formulário
 const mensagensRecentes = new Set();
 
-// 1. Middlewares
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Favicon
 if (fs.existsSync(path.join(__dirname, 'images', 'favicon.svg'))) {
     app.use(favicon(path.join(__dirname, 'images', 'favicon.svg')));
 }
-
-// 2. Ficheiros Estáticos
-app.use(express.static(__dirname));
-app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // --- CONFIGURAÇÃO GOOGLE AUTH ---
 const oAuth2Client = new google.auth.OAuth2(
@@ -59,114 +53,114 @@ async function sendEmail(to, subject, text) {
         text
     ].join('\n');
 
-    const encodedMessage = Buffer.from(message)
-        .toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-
-    return gmail.users.messages.send({
-        userId: 'me',
-        requestBody: { raw: encodedMessage }
-    });
+    const encodedMessage = Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return gmail.users.messages.send({ userId: 'me', requestBody: { raw: encodedMessage } });
 }
 
-// 3. Rota do QR (Extraindo o MÁXIMO de informação)
-app.get('/qr', async (req, res) => {
+// --- FUNÇÃO EXTRATORA DE ESTATÍSTICAS (Roda em segundo plano) ---
+async function registarVisita(req, acao) {
     try {
-        // Datas
         const now = new Date();
         const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
         const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
         
-        // Extração de Dados Técnicos
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Desconhecido';
         const userAgent = req.headers['user-agent'] || 'Desconhecido';
         const acceptLang = req.headers['accept-language'] || '';
         const idioma = acceptLang ? acceptLang.split(',')[0] : 'Desconhecido';
-        const referer = req.headers['referer'] || req.headers['referrer'] || 'Scan Direto';
+        const referer = req.headers['referer'] || req.headers['referrer'] || 'Acesso Direto';
 
-        // Grava no Google Sheets (Aba: QR_Logs)
-        await appendToSheet('QR_Logs', [data, hora, 'SCAN', ip, idioma, userAgent, referer]);
-
-        // Tenta enviar o qr.html, se não existir, vai para a home
-        const qrPath = path.join(__dirname, 'qr.html');
-        if (fs.existsSync(qrPath)) {
-            res.sendFile(qrPath);
-        } else {
-            res.redirect('/pt');
-        }
-    } catch (e) {
-        console.error("Erro na rota /qr:", e);
-        res.redirect('/pt');
+        await appendToSheet('Estatisticas', [data, hora, acao, ip, idioma, userAgent, referer]);
+    } catch (err) {
+        console.error('Erro ao registar visita:', err.message);
     }
+}
+
+// --- ROTAS DE PÁGINAS (Sem 'await' = Resposta Instantânea) ---
+app.get('/qr', (req, res) => {
+    registarVisita(req, 'SCAN QR'); // Fica a gravar em segundo plano
+    const qrPath = path.join(__dirname, 'qr.html');
+    fs.existsSync(qrPath) ? res.sendFile(qrPath) : res.redirect('/pt');
 });
 
-// 4. Rotas de Páginas Explícitas
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
-app.get('/pt.html', (req, res) => res.sendFile(path.join(__dirname, 'pt.html')));
-app.get('/fr.html', (req, res) => res.sendFile(path.join(__dirname, 'fr.html')));
-app.get('/eng.html', (req, res) => res.sendFile(path.join(__dirname, 'eng.html')));
+app.get('/', (req, res) => {
+    registarVisita(req, 'VISITA HOME');
+    res.sendFile(path.join(__dirname, 'pt.html'));
+});
 
-// 5. Handler do Formulário (Com proteção Anti-Duplicação)
-app.post('/submit-form', async (req, res) => {
+app.get('/pt.html', (req, res) => {
+    registarVisita(req, 'VISITA (PT)');
+    res.sendFile(path.join(__dirname, 'pt.html'));
+});
+
+app.get('/fr.html', (req, res) => {
+    registarVisita(req, 'VISITA (FR)');
+    res.sendFile(path.join(__dirname, 'fr.html'));
+});
+
+app.get('/eng.html', (req, res) => {
+    registarVisita(req, 'VISITA (ENG)');
+    res.sendFile(path.join(__dirname, 'eng.html'));
+});
+
+// --- FICHEIROS ESTÁTICOS ---
+app.use(express.static(__dirname));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
+// --- FORMULÁRIO DE CONTACTO (Resposta Instantânea) ---
+app.post('/submit-form', (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     const redirectMap = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' };
     const urlDestino = redirectMap[lang] || '/pt.html';
 
-    // Cria uma "assinatura" única baseada no utilizador e na mensagem
+    // 1. Verifica duplicação
     const assinatura = `${ip}-${email}-${message}`;
-
-    // Bloqueia se a mesma mensagem foi enviada há menos de 15 segundos
     if (mensagensRecentes.has(assinatura)) {
-        console.log(`Envio duplicado bloqueado para: ${email}`);
         return res.redirect(urlDestino);
     }
 
-    // Regista a assinatura e programa a sua limpeza após 15 segundos
     mensagensRecentes.add(assinatura);
     setTimeout(() => mensagensRecentes.delete(assinatura), 15000);
 
-    // Prepara as datas
-    const now = new Date();
-    const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
-    const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
-    
-    // Grava no Google Sheets (Aba: Contactos)
-    await appendToSheet('Contactos', [data, hora, lang.toUpperCase(), name, email, message]);
-
-    // Envia o Email
-    const recipients = (process.env.NOTIFY_TO || '').split(',').map(e => e.trim()).filter(Boolean);
-    try {
-        for (const to of recipients) {
-            await sendEmail(
-                to,
-                `New message from site (${lang.toUpperCase()})`,
-                `Recebeste uma nova mensagem (lingua=${lang}):\n\nNome: ${name}\nEmail: ${email}\nMensagem:\n${message}`
-            );
-        }
-    } catch (err) {
-        console.error("Erro ao enviar email:", err.message);
-    }
-
+    // 2. REDIRECIONA O CLIENTE IMEDIATAMENTE (O site fica super rápido)
     res.redirect(urlDestino);
+
+    // 3. Processa e-mails e Google Sheets em segundo plano
+    (async () => {
+        try {
+            const now = new Date();
+            const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
+            const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
+            
+            await appendToSheet('Contactos', [data, hora, lang.toUpperCase(), name, email, message]);
+
+            const recipients = (process.env.NOTIFY_TO || '').split(',').map(e => e.trim()).filter(Boolean);
+            for (const to of recipients) {
+                await sendEmail(to, `Mensagem Site - ${lang.toUpperCase()}`, `Nome: ${name}\nEmail: ${email}\nMensagem:\n${message}`);
+            }
+        } catch (err) {
+            console.error("Erro ao processar formulário:", err.message);
+        }
+    })();
 });
 
-// 6. Catch-all (Fallback para HTML)
+// --- CATCH-ALL (Acessos genéricos, fallback) ---
 app.use((req, res, next) => {
     const reqPathDecoded = decodeURIComponent(req.path || '');
     const relRequested = reqPathDecoded.replace(/^\/+|\/+$/g, '') || 'pt';
     const candidate = path.join(__dirname, relRequested + '.html');
 
     fs.access(candidate, fs.constants.R_OK, (err) => {
-        if (!err) return res.sendFile(candidate);
+        if (!err) {
+            registarVisita(req, `VISITA LINK (/${relRequested})`); // Segundo plano
+            return res.sendFile(candidate);
+        }
         next();
     });
 });
 
-// 7. 404
 app.use((req, res) => res.status(404).send('404: Not Found'));
 
 app.listen(PORT, '0.0.0.0', () => {
