@@ -6,7 +6,6 @@ const { google } = require('googleapis');
 const favicon = require('serve-favicon');
 
 const app = express();
-// Essencial para obteres os IPs limpos
 app.set('trust proxy', true);
 
 const PORT = process.env.PORT || 8080;
@@ -18,7 +17,7 @@ const hitCounter = new Map();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// --- 1. ASSETS ESTÁTICOS (Sempre servidos primeiro para evitar tela azul) ---
+// --- 1. ASSETS ESTÁTICOS NO TOPO (Garante que nunca há Tela Azul) ---
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
@@ -46,7 +45,7 @@ async function appendToSheet(sheetName, values) {
     } catch (err) {}
 }
 
-// --- ESPIÃO DE ESTATÍSTICAS ---
+// --- 2. O ESPIÃO DE ESTATÍSTICAS ---
 app.use((req, res, next) => {
     if (req.method !== 'GET') return next();
     if (req.path.startsWith('/assets') || req.path.startsWith('/images') || req.path.match(/\.(css|js|png|jpg|jpeg|gif|svg|mp4|webm|ico)$/)) {
@@ -83,12 +82,12 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- ROTAS BASE ---
+// --- 3. REDIRECIONAMENTO DA RAIZ ---
 app.get('/', (req, res) => {
-    res.redirect('/pt'); // Apenas /pt, sem barra final
+    res.redirect('/pt'); // Envia para a landing page (sem barra)
 });
 
-// --- FORMULÁRIO ---
+// --- 4. FORMULÁRIO DE CONTACTO ---
 app.post('/submit-form', (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
     let ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -119,43 +118,39 @@ app.post('/submit-form', (req, res) => {
     })().catch(err => console.error("Erro form:", err.message));
 });
 
-// --- O ROTEADOR EXATO (Resolve todos os problemas de 404 e pastas) ---
+// --- 5. O ROTEADOR ABSOLUTO (Fim do conflito Pasta vs Ficheiro) ---
 app.use((req, res, next) => {
     if (req.method !== 'GET') return next();
 
-    // Verifica se o utilizador digitou a barra final no URL (ex: /pt/ ou /fr/)
-    const isTrailingSlash = req.path.endsWith('/');
-    
-    // Tira as barras para sabermos o nome limpo da língua/página (ex: "fr" ou "eng")
-    const cleanPath = req.path.replace(/^\/+|\/+$/g, '');
+    // Ignora rotas que já têm uma extensão (ex: ficheiros estáticos que passaram despercebidos)
+    if (req.path.match(/\.[^/]+$/)) return next();
 
-    // 1. O utilizador pediu uma PASTA (tem barra no fim)
-    if (isTrailingSlash) {
-        const folderIndex = path.join(__dirname, cleanPath, 'index.html');
-        if (fs.existsSync(folderIndex)) {
-            return res.sendFile(folderIndex);
-        }
+    let targetPath;
+
+    // A REGRA:
+    // Se o utilizador escreveu uma barra no fim (ex: /pt/ ou /fr/)...
+    if (req.path.endsWith('/')) {
+        // ...ele quer o ficheiro index.html DENTRO dessa pasta.
+        targetPath = path.join(__dirname, req.path, 'index.html');
     } 
-    // 2. O utilizador pediu uma PÁGINA (não tem barra no fim)
+    // Se NÃO tem barra no fim (ex: /pt ou /fr ou /pt/vinho_tinto)...
     else {
-        // Tenta encontrar o ficheiro na raiz (ex: fr.html, eng.html)
-        const rootFile = path.join(__dirname, cleanPath + '.html');
-        if (fs.existsSync(rootFile)) {
-            return res.sendFile(rootFile);
-        }
-        
-        // Tenta encontrar subpáginas (ex: /pt/vinho_tinto -> /pt/vinho_tinto.html)
-        const subPageFile = path.join(__dirname, cleanPath + '.html');
-        if (fs.existsSync(subPageFile)) {
-             return res.sendFile(subPageFile);
-        }
+        // ...ele quer um ficheiro .html com esse nome exato.
+        targetPath = path.join(__dirname, req.path + '.html');
     }
 
-    // Se chegou aqui, a página não existe
-    next();
+    // Verifica se o ficheiro calculado existe fisicamente
+    fs.access(targetPath, fs.constants.R_OK, (err) => {
+        if (!err) {
+            // Se existir, entrega-o sem fazer nenhum redirecionamento!
+            return res.sendFile(targetPath);
+        }
+        // Se não existir, passa para a página 404
+        next();
+    });
 });
 
-app.use((req, res) => res.status(404).send('404: Not Found'));
+app.use((req, res) => res.status(404).send('404: Página não encontrada'));
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor ativo na porta ${PORT}`);
