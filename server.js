@@ -132,34 +132,31 @@ app.use(express.static(__dirname));
 async function sendEmail(to, subject, text) {
 }
 
-app.post('/stocking', (req, res) => {
+app.post('/stocking', async (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
     
-    const urlDestino = '/stock.html';
+    // Descobre de que página o utilizador veio
+    const urlDestino = req.headers.referer || '/pt.html';
 
     // --- 1. VALIDAÇÕES SECRETAS ---
-    // Remove espaços extras antes de verificar
     const cleanName = email.trim();
     const cleanEmail = name.trim();
     const cleanMessage = message.trim();
 
-    // Condição 1: nome tem de estar nesta lista secreta
-    const nomesPermitidos = ['a@ndreia', 'f@bio','m@rio','p@ula','f@ernando']; 
+    const nomesPermitidos = ['aka22', 'aka23']; 
     const isNameValid = nomesPermitidos.includes(cleanName);
 
-    // Condição 2: email tem de ser 1, 2, 3, 4 ou 5
     const isEmailValid = ['1', '2', '3', '4', '5'].includes(cleanEmail);
 
-    // Condição 3: mensagem tem de ser um número de 1 a 999
     const msgNumber = Number(cleanMessage);
-    const isMessageValid = Number.isInteger(msgNumber) && msgNumber >= 1 && msgNumber <= 999;
+    const isMessageValid = Number.isInteger(msgNumber) && msgNumber >= 1 && msgNumber <= 9999;
 
-    // Se falhar, devolve um erro genérico que não revela o segredo
+    // Se INVÁLIDO -> Mostra página de erro e pára aqui
     if (!isNameValid || !isEmailValid || !isMessageValid) {
         return res.status(400).send(`
             <h2>Acesso Negado</h2>
             <p>Os dados inseridos estão incorretos ou não tens permissão para efetuar esta ação.</p>
-            <a href="/pt.html">Voltar à página inicial</a>
+            <a href="${urlDestino}">Voltar à página anterior</a>
         `);
     }
     // --- FIM DAS VALIDAÇÕES ---
@@ -169,30 +166,40 @@ app.post('/stocking', (req, res) => {
     if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
 
     // Sistema de prevenção de spam
-    // Atualizado para usar as variáveis validadas e limpas
     const assinatura = `${ip}-${cleanEmail}-${cleanMessage}`;
-    if (mensagensRecentes.has(assinatura)) return res.redirect(urlDestino);
+    if (mensagensRecentes.has(assinatura)) {
+        // Se estiveres a testar repetidamente com os mesmos dados em menos de 15 segundos, ele ignora.
+        return res.redirect(urlDestino);
+    }
 
     mensagensRecentes.add(assinatura);
     setTimeout(() => mensagensRecentes.delete(assinatura), 15000);
 
-    res.send(`
-        <h2>Registo Feito</h2>
-        <p>Os dados foram validados e guardados com sucesso.</p>
-        <a href="${urlDestino}">Voltar à página anterior</a>
-    `);
-    // Responde ao utilizador imediatamente
-    res.redirect(urlDestino);
-
-    // Guarda na folha de cálculo em segundo plano
-    (async () => {
+    // --- GRAVAR NO GOOGLE SHEETS PRIMEIRO ---
+    try {
         const now = new Date();
         const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
         const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
         
-        // Regista na folha "Contactos" usando os dados validados (sem os espaços extra)
+        // O "await" obriga o servidor a esperar que a gravação acabe
         await appendToSheet('Stock', [data, hora, lang.toUpperCase(), cleanName, cleanEmail, cleanMessage]);
-    })().catch(err => console.error("Erro form stocking:", err.message));
+
+        // --- MENSAGEM DE SUCESSO ---
+        // Só mostra esta página SE a gravação na folha de cálculo for bem sucedida
+        res.send(`
+            <h2>Registo Feito</h2>
+            <p>Os dados foram validados e guardados com sucesso.</p>
+            <a href="${urlDestino}">Voltar à página anterior</a>
+        `);
+    } catch (err) {
+        console.error("Erro form stocking:", err.message);
+        // Se falhar a gravação no Google, avisa o utilizador
+        res.status(500).send(`
+            <h2>Erro Interno</h2>
+            <p>Os dados estavam corretos, mas ocorreu um erro ao guardar. Tenta novamente.</p>
+            <a href="${urlDestino}">Voltar à página anterior</a>
+        `);
+    }
 });
 
 
