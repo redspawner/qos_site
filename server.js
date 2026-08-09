@@ -149,7 +149,7 @@ app.post('/stocking', async (req, res) => {
     const isEmailValid = ['1', '2', '3', '4', '5'].includes(cleanEmail);
 
     const msgNumber = Number(cleanMessage);
-    const isMessageValid = Number.isInteger(msgNumber) && msgNumber >= 1 && msgNumber <= 9999;
+    const isMessageValid = Number.isInteger(msgNumber) && msgNumber >= -9999 && msgNumber <= 9999;
 
     // Se INVÁLIDO -> Mostra página de erro e pára aqui
     if (!isNameValid || !isEmailValid || !isMessageValid) {
