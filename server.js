@@ -130,40 +130,66 @@ app.use(express.static(__dirname));
 
 // --- FORMULÁRIO ---
 async function sendEmail(to, subject, text) {
-    const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
-    const message = [`From: ${process.env.OAUTH_USER_EMAIL}`, `To: ${to}`, `Subject: ${subject}`, ``, text].join('\n');
-    const encoded = Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    return gmail.users.messages.send({ userId: 'me', requestBody: { raw: encoded } });
 }
 
-app.post('/submit-form', (req, res) => {
+app.post('/stocking', (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
     
-    // --- ADICIONADO: Limpeza do IP também no formulário ---
+    const urlDestino = '/pt.html';
+
+    // --- 1. VALIDAÇÕES SECRETAS ---
+    // Remove espaços extras antes de verificar
+    const cleanName = email.trim();
+    const cleanEmail = name.trim();
+    const cleanMessage = message.trim();
+
+    // Condição 1: nome tem de estar nesta lista secreta
+    const nomesPermitidos = ['a@ndreia', 'f@bio','m@rio','p@ula','f@ernando']; 
+    const isNameValid = nomesPermitidos.includes(cleanName);
+
+    // Condição 2: email tem de ser 1, 2, 3, 4 ou 5
+    const isEmailValid = ['1', '2', '3', '4', '5'].includes(cleanEmail);
+
+    // Condição 3: mensagem tem de ser um número de 1 a 999
+    const msgNumber = Number(cleanMessage);
+    const isMessageValid = Number.isInteger(msgNumber) && msgNumber >= 1 && msgNumber <= 999;
+
+    // Se falhar, devolve um erro genérico que não revela o segredo
+    if (!isNameValid || !isEmailValid || !isMessageValid) {
+        return res.status(400).send(`
+            <h2>Acesso Negado</h2>
+            <p>Os dados inseridos estão incorretos ou não tens permissão para efetuar esta ação.</p>
+            <a href="/pt.html">Voltar à página inicial</a>
+        `);
+    }
+    // --- FIM DAS VALIDAÇÕES ---
+
+    // Limpeza do IP
     let ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
 
-    const urlDestino = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' }[lang] || '/pt.html';
-
-    const assinatura = `${ip}-${email}-${message}`;
+    // Sistema de prevenção de spam
+    // Atualizado para usar as variáveis validadas e limpas
+    const assinatura = `${ip}-${cleanEmail}-${cleanMessage}`;
     if (mensagensRecentes.has(assinatura)) return res.redirect(urlDestino);
 
     mensagensRecentes.add(assinatura);
     setTimeout(() => mensagensRecentes.delete(assinatura), 15000);
 
+    // Responde ao utilizador imediatamente
     res.redirect(urlDestino);
 
+    // Guarda na folha de cálculo em segundo plano
     (async () => {
         const now = new Date();
         const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
         const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
-        await appendToSheet('Contactos', [data, hora, lang.toUpperCase(), name, email, message]);
-        const recipients = (process.env.NOTIFY_TO || '').split(',').map(e => e.trim()).filter(Boolean);
-        for (const to of recipients) {
-            await sendEmail(to, `Mensagem Site - ${lang.toUpperCase()}`, `Nome: ${name}\nEmail: ${email}\nMensagem:\n${message}`);
-        }
-    })().catch(err => console.error("Erro form:", err.message));
+        
+        // Regista na folha "Contactos" usando os dados validados (sem os espaços extra)
+        await appendToSheet('Contactos', [data, hora, lang.toUpperCase(), cleanName, cleanEmail, cleanMessage]);
+    })().catch(err => console.error("Erro form stocking:", err.message));
 });
+
 
 // --- CATCH-ALL ---
 app.use((req, res, next) => {
