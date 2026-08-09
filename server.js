@@ -133,7 +133,7 @@ async function sendEmail(to, subject, text) {
 }
 
 app.post('/stocking', async (req, res) => {
-    const { lang = 'pt', name = '', email = '', message = '' } = req.body;
+    const { lang = 'pt', name = '', email = '', message = '', operacao = '' } = req.body;
     
     // Descobre de que página o utilizador veio
     const urlDestino = req.headers.referer || '/pt.html';
@@ -142,6 +142,7 @@ app.post('/stocking', async (req, res) => {
     const cleanName = email.trim();
     const cleanEmail = name.trim();
     const cleanMessage = message.trim();
+    const cleanOperacao = operacao.trim().toLowerCase();
 
     const nomesPermitidos = ['a@ndreia', 'f@bio','m@rio','p@ula','f@ernando']; 
     const isNameValid = nomesPermitidos.includes(cleanName);
@@ -149,7 +150,9 @@ app.post('/stocking', async (req, res) => {
     const isEmailValid = ['1', '2', '3', '4', '5'].includes(cleanEmail);
 
     const msgNumber = Number(cleanMessage);
-    const isMessageValid = Number.isInteger(msgNumber) && msgNumber >= -9999 && msgNumber <= 9999;
+    const isMessageValid = Number.isInteger(msgNumber) && msgNumber >= 1 && msgNumber <= 9999;
+
+    const isOperacaoValid = ['consumo', 'vendas'].includes(cleanOperacao);
 
     // Se INVÁLIDO -> Mostra página de erro e pára aqui
     if (!isNameValid || !isEmailValid || !isMessageValid) {
@@ -182,7 +185,7 @@ app.post('/stocking', async (req, res) => {
         const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
         
         // O "await" obriga o servidor a esperar que a gravação acabe
-        await appendToSheet('Stock', [data, hora, lang.toUpperCase(), cleanName, cleanEmail, cleanMessage]);
+        await appendToSheet('Stock', [data, hora, lang.toUpperCase(), cleanName, cleanEmail, cleanMessage, cleanOperacao]);
 
         // --- MENSAGEM DE SUCESSO ---
         // Só mostra esta página SE a gravação na folha de cálculo for bem sucedida
