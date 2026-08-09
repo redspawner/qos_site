@@ -143,7 +143,7 @@ app.post('/stocking', async (req, res) => {
     const cleanEmail = name.trim();
     const cleanMessage = message.trim();
 
-    const nomesPermitidos = ['aka22', 'aka23']; 
+    const nomesPermitidos = ['a@ndreia', 'f@bio','m@rio','p@ula','f@ernando']; 
     const isNameValid = nomesPermitidos.includes(cleanName);
 
     const isEmailValid = ['1', '2', '3', '4', '5'].includes(cleanEmail);
