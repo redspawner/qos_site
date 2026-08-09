@@ -186,7 +186,7 @@ app.post('/stocking', (req, res) => {
         const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
         
         // Regista na folha "Contactos" usando os dados validados (sem os espaços extra)
-        await appendToSheet('Contactos', [data, hora, lang.toUpperCase(), cleanName, cleanEmail, cleanMessage]);
+        await appendToSheet('Stock', [data, hora, lang.toUpperCase(), cleanName, cleanEmail, cleanMessage]);
     })().catch(err => console.error("Erro form stocking:", err.message));
 });
 
