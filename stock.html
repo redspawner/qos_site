@@ -63,22 +63,6 @@
 <script src="/assets/js/breakpoints.min.js"></script>
 <script src="/assets/js/util.js"></script>
 <script src="/assets/js/main.js"></script>
-<script>
-  const video = document.getElementById('bg-video');
-
-  // Force load and play
-  video.load();
-
-  // Try to play when ready
-  video.addEventListener('canplay', () => {
-    video.play().catch(err => console.log('Autoplay prevented:', err));
-  });
-
-  // Fallback for mobile Safari
-  document.addEventListener('DOMContentLoaded', () => {
-    video.play().catch(err => console.log('Autoplay prevented:', err));
-  });
-</script>
 
 	</body>
 </html>
