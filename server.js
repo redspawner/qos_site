@@ -135,7 +135,7 @@ async function sendEmail(to, subject, text) {
 app.post('/stocking', (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '' } = req.body;
     
-    const urlDestino = '/pt.html';
+    const urlDestino = '/stock.html';
 
     // --- 1. VALIDAÇÕES SECRETAS ---
     // Remove espaços extras antes de verificar
@@ -176,6 +176,11 @@ app.post('/stocking', (req, res) => {
     mensagensRecentes.add(assinatura);
     setTimeout(() => mensagensRecentes.delete(assinatura), 15000);
 
+    res.send(`
+        <h2>Registo Feito</h2>
+        <p>Os dados foram validados e guardados com sucesso.</p>
+        <a href="${urlDestino}">Voltar à página anterior</a>
+    `);
     // Responde ao utilizador imediatamente
     res.redirect(urlDestino);
 
