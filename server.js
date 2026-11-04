@@ -43,6 +43,7 @@ async function appendToSheet(sheetName, values) {
         });
     } catch (err) {
         console.error(`Erro Sheets (${sheetName}):`, err.message);
+        throw err; // Propaga o erro para que as rotas saibam se a gravação falhou
     }
 }
 
@@ -65,12 +66,12 @@ async function registarVisita(req, acao) {
         const nowMs = Date.now();
         const userHits = hitCounter.get(ip) || [];
         const recentHits = userHits.filter(timestamp => nowMs - timestamp < 10000);
-        
+
         if (recentHits.length > 6) {
             console.log(`[BOT DETECTADO POR VELOCIDADE] IP: ${ip}`);
-            return; 
+            return;
         }
-        
+
         recentHits.push(nowMs);
         hitCounter.set(ip, recentHits);
 
@@ -83,7 +84,7 @@ async function registarVisita(req, acao) {
         const referer = req.headers['referer'] || req.headers['referrer'] || 'Acesso Direto';
 
         // Grava em segundo plano
-        appendToSheet('Estatisticas', [data, hora, acao, ip, idioma, userAgent, referer]);
+        appendToSheet('Estatisticas', [data, hora, acao, ip, idioma, userAgent, referer]).catch(() => {});
     } catch (err) {
         console.error('Erro ao registar visita:', err.message);
     }
@@ -128,13 +129,48 @@ app.get('/eng/', (req, res, next) => { registarVisita(req, 'VISITA PASTA (/eng/)
 // O motor mágico que faz as tuas pastas e ficheiros funcionarem nativamente
 app.use(express.static(__dirname));
 
-// --- FORMULÁRIO ---
+// --- ENVIO DE EMAIL (GMAIL API) ---
 async function sendEmail(to, subject, text) {
+    const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
+    const message = [`From: ${process.env.OAUTH_USER_EMAIL}`, `To: ${to}`, `Subject: ${subject}`, ``, text].join('\n');
+    const encoded = Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return gmail.users.messages.send({ userId: 'me', requestBody: { raw: encoded } });
 }
 
+// --- FORMULÁRIO DE CONTACTO (/submit-form) ---
+app.post('/submit-form', (req, res) => {
+    const { lang = 'pt', name = '', email = '', message = '' } = req.body;
+
+    // Limpeza do IP
+    let ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
+
+    const urlDestino = { 'pt': '/enviado', 'fr': '/envoye', 'eng': '/sent' }[lang] || '/pt.html';
+
+    const assinatura = `contact-${ip}-${email}-${message}`;
+    if (mensagensRecentes.has(assinatura)) return res.redirect(urlDestino);
+
+    mensagensRecentes.add(assinatura);
+    setTimeout(() => mensagensRecentes.delete(assinatura), 15000);
+
+    res.redirect(urlDestino);
+
+    (async () => {
+        const now = new Date();
+        const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
+        const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
+        await appendToSheet('Contactos', [data, hora, lang.toUpperCase(), name, email, message]);
+        const recipients = (process.env.NOTIFY_TO || '').split(',').map(e => e.trim()).filter(Boolean);
+        for (const to of recipients) {
+            await sendEmail(to, `Mensagem Site - ${lang.toUpperCase()}`, `Nome: ${name}\nEmail: ${email}\nMensagem:\n${message}`);
+        }
+    })().catch(err => console.error("Erro form (/submit-form):", err.message));
+});
+
+// --- FORMULÁRIO DE STOCK (/stocking) ---
 app.post('/stocking', async (req, res) => {
     const { lang = 'pt', name = '', email = '', message = '', operacao = '' } = req.body;
-    
+
     // Descobre de que página o utilizador veio
     const urlDestino = req.headers.referer || '/pt.html';
 
@@ -144,7 +180,7 @@ app.post('/stocking', async (req, res) => {
     const cleanMessage = message.trim();
     const cleanOperacao = operacao.trim().toLowerCase();
 
-    const nomesPermitidos = ['a@ndreia', 'f@bio','m@rio','p@ula','f@ernando']; 
+    const nomesPermitidos = ['a@ndreia', 'f@bio', 'm@rio', 'p@ula', 'f@ernando'];
     const isNameValid = nomesPermitidos.includes(cleanName);
 
     const isEmailValid = ['1', '2', '3', '4', '5'].includes(cleanEmail);
@@ -155,7 +191,7 @@ app.post('/stocking', async (req, res) => {
     const isOperacaoValid = ['consumo', 'vendas'].includes(cleanOperacao);
 
     // Se INVÁLIDO -> Mostra página de erro e pára aqui
-    if (!isNameValid || !isEmailValid || !isMessageValid) {
+    if (!isNameValid || !isEmailValid || !isMessageValid || !isOperacaoValid) {
         return res.status(400).send(`
             <h2>Acesso Negado</h2>
             <p>Os dados inseridos estão incorretos ou não tens permissão para efetuar esta ação.</p>
@@ -169,9 +205,8 @@ app.post('/stocking', async (req, res) => {
     if (ip && ip.includes(',')) ip = ip.split(',')[0].trim();
 
     // Sistema de prevenção de spam
-    const assinatura = `${ip}-${cleanEmail}-${cleanMessage}`;
+    const assinatura = `stock-${ip}-${cleanEmail}-${cleanMessage}`;
     if (mensagensRecentes.has(assinatura)) {
-        // Se estiveres a testar repetidamente com os mesmos dados em menos de 15 segundos, ele ignora.
         return res.redirect(urlDestino);
     }
 
@@ -183,12 +218,11 @@ app.post('/stocking', async (req, res) => {
         const now = new Date();
         const data = now.toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' });
         const hora = now.toLocaleTimeString('pt-PT', { timeZone: 'Europe/Lisbon' });
-        
+
         // O "await" obriga o servidor a esperar que a gravação acabe
         await appendToSheet('Stock', [data, hora, lang.toUpperCase(), cleanName, cleanEmail, cleanMessage, cleanOperacao]);
 
         // --- MENSAGEM DE SUCESSO ---
-        // Só mostra esta página SE a gravação na folha de cálculo for bem sucedida
         res.send(`
             <h2>Registo Feito</h2>
             <p>Os dados foram validados e guardados com sucesso.</p>
@@ -196,7 +230,6 @@ app.post('/stocking', async (req, res) => {
         `);
     } catch (err) {
         console.error("Erro form stocking:", err.message);
-        // Se falhar a gravação no Google, avisa o utilizador
         res.status(500).send(`
             <h2>Erro Interno</h2>
             <p>Os dados estavam corretos, mas ocorreu um erro ao guardar. Tenta novamente.</p>
@@ -204,7 +237,6 @@ app.post('/stocking', async (req, res) => {
         `);
     }
 });
-
 
 // --- CATCH-ALL ---
 app.use((req, res, next) => {
