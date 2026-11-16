@@ -19,7 +19,7 @@ Railway redeploys the site automatically whenever something is committed to the 
 | `assets/fonts/` | Text fonts (Merriweather, Source Sans Pro), served from our own site |
 | `assets/webfonts/` | Full Font Awesome icon fonts (only downloaded if a new icon is used) |
 | `images/` | Every picture the site shows, already resized and compressed |
-| `images/slides/` | Background slideshow photos (`NN-tall.webp` for phones, `NN-wide.webp` for computers) |
+| `images/slides/` | Background slideshow photos (`NAME-tall.webp` for phones, `NAME-wide.webp` for computers) |
 | `images/gallery/` | Gallery photos (big) and `images/gallery/thumb/` (small versions for the grid) |
 | `originals/` | Full-size source files that the site does **not** use or serve (safe to move elsewhere) |
 | `server.js` | The server: serves the files, contact form, visit statistics, stock form |
@@ -81,8 +81,8 @@ uploading, shrink them (for example with the free <https://squoosh.app>, format 
 | Photo beside text, product photo | 900 wide | 30–130 KB |
 | Gallery photo | 1600 on the long side | 100–300 KB |
 | Gallery thumbnail | 640 wide | 20–60 KB |
-| Background, phones (`-tall`) | 1080 x 1920 | 80–420 KB |
-| Background, computers (`-wide`) | 1620 x 1080 | 90–450 KB |
+| Background, phones (`-tall`) | 1080 x 1920 | 90–500 KB |
+| Background, computers (`-wide`) | 1920 x 1280 | 80–700 KB |
 
 When replacing a photo, give the new file a **new name**: browsers keep images for 30 days, so a
 changed file with the same name would not show up for returning visitors.
