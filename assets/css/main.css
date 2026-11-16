@@ -3163,6 +3163,7 @@ body.is-preload #intro {
      8. Age-check and "thank you" screens (body class "landing")
      9. Phone adjustments
     10. Reduced motion
+    11. Legal texts (terms page, privacy note under the form)
 
    ========================================================================== */
 
@@ -3181,13 +3182,13 @@ body.is-preload #intro {
 		z-index: -1;
 		overflow: hidden;
 		pointer-events: none;
-		background: #1e252d url("../../images/bg/01-wide.webp") center / cover no-repeat;
+		background: #1e252d url("../../images/slides/01-wide.webp") center / cover no-repeat;
 	}
 
 	@media (orientation: portrait) {
 
 		#bg {
-			background-image: url("../../images/bg/01-tall.webp");
+			background-image: url("../../images/slides/01-tall.webp");
 		}
 
 	}
@@ -3858,3 +3859,52 @@ body.is-preload #intro {
 		}
 
 	}
+
+
+/* 11. Legal texts ---------------------------------------------------------- */
+
+	/* Short privacy note under the contact form. */
+
+	#footer .form-note {
+		font-size: 0.8rem;
+		line-height: 1.75;
+		margin: -0.5rem 0 1.5rem 0;
+		text-align: left;
+	}
+
+	/* Terms and conditions: headings and lists readable, text aligned left. */
+
+	#main > .post.terms h2 {
+		font-size: 1rem;
+		margin: 2.5rem 0 1rem 0;
+	}
+
+	#main > .post.terms p,
+	#main > .post.terms li {
+		text-align: left;
+	}
+
+	#main > .post.terms ul:not(.actions) {
+		list-style: disc;
+		padding-left: 1.25rem;
+		margin-bottom: 2rem;
+	}
+
+	#main > .post.terms .image.main {
+		max-width: 24rem;
+		margin: 0 auto 2rem auto;
+	}
+
+	/* Bottom strip (copyright, terms, complaints book): dark band so it stays readable over the photo. */
+
+	#copyright {
+		background: rgba(30, 37, 45, 0.88);
+		color: rgba(255, 255, 255, 0.7);
+		max-width: 72rem;
+		margin: 0 auto;
+		padding: 2rem 1rem;
+	}
+
+		#copyright a {
+			border-bottom: dotted 1px rgba(255, 255, 255, 0.5);
+		}
