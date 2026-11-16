@@ -20,9 +20,9 @@
 	/* SETTINGS ------------------------------------------------------------- */
 
 	// Background photos, in the order they are shown.
-	// Each name needs two files in /images/bg/ :
+	// Each name needs two files in /images/slides/ :
 	//   NAME-tall.webp  (1080 x 1920, upright)   used on phones / upright screens
-	//   NAME-wide.webp  (1080 x 720, landscape)  used on computers / wide screens
+	//   NAME-wide.webp  (1620 x 1080, landscape)  used on computers / wide screens
 	// To add a photo: put both files in that folder and add its name to this list.
 	// To change the very first photo, also update the two "bg/01-..." names in
 	// assets/css/main.css (section "1. Background") and in the <head> of the pages.
@@ -99,7 +99,7 @@
 		});
 
 		function photo(i) {
-			return '/images/bg/' + SLIDES[i] + (upright.matches ? '-tall' : '-wide') + '.webp';
+			return '/images/slides/' + SLIDES[i] + (upright.matches ? '-tall' : '-wide') + '.webp';
 		}
 
 		// Only run while someone can actually see it: the tab is open and, on

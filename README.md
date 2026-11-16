@@ -19,7 +19,7 @@ Railway redeploys the site automatically whenever something is committed to the 
 | `assets/fonts/` | Text fonts (Merriweather, Source Sans Pro), served from our own site |
 | `assets/webfonts/` | Full Font Awesome icon fonts (only downloaded if a new icon is used) |
 | `images/` | Every picture the site shows, already resized and compressed |
-| `images/bg/` | Background slideshow photos (`NN-tall.webp` for phones, `NN-wide.webp` for computers) |
+| `images/slides/` | Background slideshow photos (`NN-tall.webp` for phones, `NN-wide.webp` for computers) |
 | `images/gallery/` | Gallery photos (big) and `images/gallery/thumb/` (small versions for the grid) |
 | `originals/` | Full-size source files that the site does **not** use or serve (safe to move elsewhere) |
 | `server.js` | The server: serves the files, contact form, visit statistics, stock form |
@@ -65,7 +65,7 @@ new page number to the `pagination` block of every gallery page.
 
 **Change the background photos** — the list is at the top of `assets/js/main.js` (`SLIDES`),
 together with how long each photo stays and how long the fade takes. Each photo needs a `-tall` and
-a `-wide` file in `images/bg/`.
+a `-wide` file in `images/slides/`.
 
 **Change colours, sizes, spacing** — `assets/css/main.css`, in the second part (search for
 `SITE STYLES`). It has a table of contents and every block says what it is for.
@@ -81,8 +81,8 @@ uploading, shrink them (for example with the free <https://squoosh.app>, format 
 | Photo beside text, product photo | 900 wide | 30–130 KB |
 | Gallery photo | 1600 on the long side | 100–300 KB |
 | Gallery thumbnail | 640 wide | 20–60 KB |
-| Background, phones (`-tall`) | 1080 x 1920 | 60–300 KB |
-| Background, computers (`-wide`) | 1080 x 720 | 40–130 KB |
+| Background, phones (`-tall`) | 1080 x 1920 | 80–420 KB |
+| Background, computers (`-wide`) | 1620 x 1080 | 90–450 KB |
 
 When replacing a photo, give the new file a **new name**: browsers keep images for 30 days, so a
 changed file with the same name would not show up for returning visitors.
