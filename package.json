@@ -1,26 +1,20 @@
 {
   "name": "qos_site",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "description": "Website of Quinta Outeiro da Serva (quintaouteirodaserva.com)",
+  "private": true,
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
   "engines": {
-    "node": "18.x"
+    "node": "22.x"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "license": "UNLICENSED",
   "dependencies": {
+    "@googleapis/gmail": "^18.0.0",
+    "@googleapis/sheets": "^14.0.0",
     "dotenv": "^16.6.1",
-    "express": "^5.1.0",
-    "googleapis": "^160.0.0",
-    "html-link-extractor": "^1.0.5",
-    "install": "^0.13.0",
-    "nodemailer": "^7.0.3",
-    "npm": "^11.6.0",
-    "serve-favicon": "^2.5.1"
+    "express": "^5.1.0"
   }
 }

@@ -1,217 +1,163 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 	<head>
-		<link rel="preload" href="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/bk.mp4" as="video">
-		
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Gallery (5) - Quinta Outeiro da Serva</title>
+		<meta name="description" content="Discover our wines, olive oil and local products. Tradition and taste from Monte Real, Portugal.">
+		<link rel="canonical" href="https://quintaouteirodaserva.com/eng/gallery_5">
+		<link rel="alternate" hreflang="pt" href="https://quintaouteirodaserva.com/pt/galeria_5">
+		<link rel="alternate" hreflang="en" href="https://quintaouteirodaserva.com/eng/gallery_5">
+		<link rel="alternate" hreflang="fr" href="https://quintaouteirodaserva.com/fr/galerie_5">
+		<link rel="alternate" hreflang="x-default" href="https://quintaouteirodaserva.com/pt/galeria_5">
 
-<!-- optionally: noscript fallback to the static image -->
-<noscript>
-  <div class="bg-image-fallback"></div>
-</noscript>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="../assets/css/main_T.css" />
-		<noscript><link rel="stylesheet" href="/assets/css/noscript.css" /></noscript>
+		<!-- Preview shown when the page is shared (WhatsApp, Facebook, ...) -->
+		<meta property="og:type" content="website">
+		<meta property="og:site_name" content="Quinta Outeiro da Serva">
+		<meta property="og:title" content="Gallery (5) - Quinta Outeiro da Serva">
+		<meta property="og:description" content="Discover our wines, olive oil and local products. Tradition and taste from Monte Real, Portugal.">
+		<meta property="og:url" content="https://quintaouteirodaserva.com/eng/gallery_5">
+		<meta property="og:image" content="https://quintaouteirodaserva.com/images/og-image.jpg">
+		<meta name="twitter:card" content="summary_large_image">
+
 		<link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
-        <link rel="alternate icon" href="/images/favicon.png" type="image/x-png">
+		<link rel="alternate icon" href="/images/favicon.png" type="image/png">
 
+		<!-- Speed: fetch the first background photo and the menu font straight away -->
+		<link rel="preload" as="image" href="/images/bg/01-wide.webp" media="(orientation: landscape)">
+		<link rel="preload" as="image" href="/images/bg/01-tall.webp" media="(orientation: portrait)">
+		<link rel="preload" as="font" type="font/woff2" href="/assets/fonts/source-sans-pro-900.woff2" crossorigin>
 
-		<!-- Primary Meta Tags -->
-<title>Quinta Outeiro da Serva</title>
-<meta name="title" content="Quinta Outeiro da Serva">
-<meta name="description" content="Discover our wines, olive oil and local products. Tradition and taste from Monte Real, Portugal.">
-
-<!-- Open Graph / WhatsApp / Facebook -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://quintaouteirodaserva.com/eng">
-<meta property="og:title" content="Quinta Outeiro da Serva">
-<meta property="og:description" content="Discover our wines, olive oil and local products. Tradition and taste from Monte Real, Portugal.">
-<meta property="og:image" content="https://quintaouteirodaserva.com/images/favicon.png">
-
-<!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="https://quintaouteirodaserva.com/eng">
-<meta property="twitter:title" content="Quinta Outeiro da Serva">
-<meta property="twitter:description" content="Discover our wines, olive oil and local products. Tradition and taste from Monte Real, Portugal.">
-<meta property="twitter:image" content="https://quintaouteirodaserva.com/images/favicon.png">
+		<link rel="stylesheet" href="/assets/css/main.css">
+		<noscript><link rel="stylesheet" href="/assets/css/noscript.css"></noscript>
+		<script src="/assets/js/main.js" defer></script>
 	</head>
 	<body class="is-preload">
-		<video id="bg-video" autoplay muted loop playsinline preload="auto" poster="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/bk.jpg">
-  <!-- include both webm & mp4 for best browser coverage -->
-  <source src="" type="video/mp4">
-  <!-- Fallback content for very old browsers -->
-  Your browser does not support the video tag.
-</video>
+
+		<!-- Background: photo slideshow (the list of photos is at the top of /assets/js/main.js) -->
+		<div id="bg"></div>
 
 		<!-- Wrapper -->
-			<div id="wrapper" class="fade-in">
+		<div id="wrapper">
 
-    <!-- Video background -->
-    <div class="bg fixed">
-        <video id="bg-video" autoplay muted loop playsinline>
-            <source src="" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        <!-- Optional overlay -->
-        <div class="overlay"></div>
-    </div>
-				<!-- Intro -->
-					<div id="intro" class>
-						<img class="fixed-logo" src="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/logo_w.svg" alt="Quinta Outeiro da Serva" />
-						<ul class="actions">
-							<li><a href="#nav" class="button icon solid solo fa-arrow-down scrolly"></a></li>
-						</ul>
-					</div>
+			<!-- Intro: the logo screen -->
+			<div id="intro">
+				<img class="fixed-logo" src="/images/logo_w.svg" alt="Quinta Outeiro da Serva" width="1288" height="750">
+				<ul class="actions">
+					<li><a href="#nav" class="button icon solid solo fa-arrow-down scrolly" aria-label="Continue"></a></li>
+				</ul>
+			</div>
 
+			<!-- Nav: the menu (on tablets and phones the script turns these links into the slide-in menu) -->
+			<nav id="nav">
+				<ul class="links">
+					<li><a href="/eng/vinification#nav">Vinification</a></li>
+					<li><a href="/eng/enotourism#nav">Enotourism</a></li>
+					<li><a href="/eng/about_us#nav">About Us</a></li>
+					<li class="active"><a href="/eng/gallery#nav">Gallery</a></li>
+				</ul>
+				<ul class="icons">
+					<li><a href="/eng/out_facebook" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
+					<li><a href="/eng/out_instagram" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+				</ul>
+			</nav>
 
+			<!-- Main: the content of this page -->
+			<div id="main">
+
+				<article class="post featured">
+					<header class="major">
+						<h2>Gallery</h2>
 					</header>
 
-				<!-- Nav -->
-					<nav id="nav">
-						<ul class="links">
-							<li><a href="/eng/vinification">Vinification</a></li>
-							<li><a href="/eng/enotourism#nav">Enotourism</a></li>
-							<li><a href="/eng/about_us#nav">About Us</a></li>
-							<li class="active"><a href="/eng/gallery#nav">Gallery</a></li>
-
-						</ul>
-						<ul class="icons">
-							<li><a href="/eng/out_facebook" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-							<li><a href="/eng/out_instagram" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-						</ul>
-					</nav>
-
-				<!-- Main -->
-<div id="main">
-
-					<div id="main">
-
-						<!-- Featured Post -->
-							<article class="post featured">
-								<header class="major">
-									<h2>Gallery</a></h2>
-
-
-								</header>
-
-
-
-
-<div id="main">
-
-<div class="box alt">
-  <div class="row gtr-50 gtr-uniform">
-    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/25.JPG" alt="" /></span></div>
-    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/26.JPG" alt="" /></span></div>
-    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/27.JPG" alt="" /></span></div>
-    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/28.JPG" alt="" /></span></div>
-    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/29.JPG" alt="" /></span></div>
-    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/30.JPG" alt="" /></span></div>
-    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/31.JPG" alt="" /></span></div>
-    <div class="col-6"><span class="image fit"><img class="expandable" src="https://pub-b9083a048d914003b840dd9df9b7e0e7.r2.dev/32.JPG" alt="" /></span></div>
-  </div>
-</div>
-	</div>
-										<footer>
-								<div class="pagination">
-									<!--<a href="#" class="previous">Prev</a>-->
-									<a href="/eng/gallery#nav" class="page">1</a>
-									<a href="/eng/gallery_2#nav" class="page">2</a>
-									<a href="/eng/gallery_3#nav" class="page">3</a>
-									<a href="/eng/gallery_4#nav" class="page">4</a>
-									<a href="/eng/gallery_5#nav" class="page active">5</a>
-
-								</div>
-							</footer>
-</div>
-
-								
-							</footer>
-
-					</div>
-					
-<ul>
-								
-									</ul>
-				<!-- Footer -->
-					<footer id="footer">
-						<section>
-							<form method="POST" action="/submit-form">
-							<input type="hidden" name="lang" value="eng" />
-							<div class="fields">
-								<div class="field">
-								<label for="name">Name</label>
-								<input type="text" name="name" id="name" required />
-								</div>
-								<div class="field">
-								<label for="email">Email</label>
-								<input type="email" name="email" id="email" required />
-								</div>
-								<div class="field">
-								<label for="message">Message</label>
-								<textarea name="message" id="message" rows="3" required></textarea>
-								</div>
+					<!-- Gallery: each photo is a small file (thumb) that opens the big one (data-full) when clicked -->
+					<div class="gallery">
+						<div class="box alt">
+							<div class="row gtr-50 gtr-uniform">
+								<div class="col-6"><span class="image fit"><img src="/images/gallery/thumb/25.webp" data-full="/images/gallery/25.webp" alt="Gallery photo 25" width="640" height="427" loading="lazy" decoding="async"></span></div>
+								<div class="col-6"><span class="image fit"><img src="/images/gallery/thumb/26.webp" data-full="/images/gallery/26.webp" alt="Gallery photo 26" width="640" height="427" loading="lazy" decoding="async"></span></div>
+								<div class="col-6"><span class="image fit"><img src="/images/gallery/thumb/27.webp" data-full="/images/gallery/27.webp" alt="Gallery photo 27" width="640" height="427" loading="lazy" decoding="async"></span></div>
+								<div class="col-6"><span class="image fit"><img src="/images/gallery/thumb/28.webp" data-full="/images/gallery/28.webp" alt="Gallery photo 28" width="640" height="427" loading="lazy" decoding="async"></span></div>
+								<div class="col-6"><span class="image fit"><img src="/images/gallery/thumb/29.webp" data-full="/images/gallery/29.webp" alt="Gallery photo 29" width="640" height="427" loading="lazy" decoding="async"></span></div>
+								<div class="col-6"><span class="image fit"><img src="/images/gallery/thumb/30.webp" data-full="/images/gallery/30.webp" alt="Gallery photo 30" width="640" height="427" loading="lazy" decoding="async"></span></div>
+								<div class="col-6"><span class="image fit"><img src="/images/gallery/thumb/31.webp" data-full="/images/gallery/31.webp" alt="Gallery photo 31" width="640" height="427" loading="lazy" decoding="async"></span></div>
+								<div class="col-6"><span class="image fit"><img src="/images/gallery/thumb/32.webp" data-full="/images/gallery/32.webp" alt="Gallery photo 32" width="640" height="427" loading="lazy" decoding="async"></span></div>
 							</div>
-							<ul class="actions">
-								<li><input type="submit" value="Send message" /></li>
-							</ul>
-							</form>
-	
-						</section>
-						<section class="split contact">
-							<section class="alt">
-								<h3>Address:</h3>
-								<p>Tv. B dos Arrabaldes, Monte Real <br />
-								2425-019, Leiria, Portugal</p>
-							</section>
-							<section>
-								<h3>Phone:</h3>
-								<p><a>+351 918 644 690 or +351 916 288 328</a></p> 
-							</section>
-							<section>
-								<h3>Email:</h3>
-								<p><a>quintaouteirodaserva@gmail.com</a></p>
-							</section>
-							<section>
-								<h3>Language:</h3>
-								<ul class="icons alt">
-									<li><a href="../" class="button" >PT</a></li>
-									<li><a href="/eng" class="button primary disabled">ENG</a></li>
-									<li><a href="/fr" class="button">FR</a></li>
-								</ul>
-							</section>
-						</section>
+						</div>
+					</div>
+
+					<!-- Page numbers -->
+					<footer class="pagination-bar">
+						<div class="pagination">
+							<a href="/eng/gallery#nav" class="page">1</a>
+							<a href="/eng/gallery_2#nav" class="page">2</a>
+							<a href="/eng/gallery_3#nav" class="page">3</a>
+							<a href="/eng/gallery_4#nav" class="page">4</a>
+							<a href="/eng/gallery_5#nav" class="page active">5</a>
+						</div>
 					</footer>
 
-				<!-- Copyright -->
-					<div id="copyright">
-<ul><li>&copy; Guerra&Bento</li><li></a></li></ul>
+				</article>
 
-					</div>
-		
-		<!-- Scripts -->
-			<script src="../assets/js/jquery.min.js"></script>
-			<script src="../assets/js/jquery.scrollex.min.js"></script>
-			<script src="../assets/js/jquery.scrolly.min.js"></script>
-			<script src="../assets/js/browser.min.js"></script>
-			<script src="../assets/js/breakpoints.min.js"></script>
-			<script src="../assets/js/util.js"></script>
-			<script src="../assets/js/main_2.js"></script>
-<script>
-  const video = document.getElementById('bg-video');
+			</div>
 
-  // Force load and play
-  video.load();
+			<!-- Footer: contact form and contacts -->
+			<footer id="footer">
+				<section>
+					<form method="POST" action="/submit-form">
+						<input type="hidden" name="lang" value="eng">
+						<div class="fields">
+							<div class="field">
+								<label for="name">Name</label>
+								<input type="text" name="name" id="name" autocomplete="name" required>
+							</div>
+							<div class="field">
+								<label for="email">Email</label>
+								<input type="email" name="email" id="email" autocomplete="email" required>
+							</div>
+							<div class="field">
+								<label for="message">Message</label>
+								<textarea name="message" id="message" rows="3" required></textarea>
+							</div>
+						</div>
+						<ul class="actions">
+							<li><input type="submit" value="Send message"></li>
+						</ul>
+					</form>
+				</section>
+				<section class="split contact">
+					<section class="alt">
+						<h3>Address:</h3>
+						<p>Tv. B dos Arrabaldes, Monte Real <br />
+						2425-019, Leiria, Portugal</p>
+					</section>
+					<section>
+						<h3>Phone:</h3>
+						<p><a href="tel:+351918644690">+351 918 644 690</a> or <a href="tel:+351916288328">+351 916 288 328</a></p>
+					</section>
+					<section>
+						<h3>Email:</h3>
+						<p><a href="mailto:quintaouteirodaserva@gmail.com">quintaouteirodaserva@gmail.com</a></p>
+					</section>
+					<section>
+						<h3>Language:</h3>
+						<ul class="icons alt">
+							<li><a href="/" class="button">PT</a></li>
+							<li><a class="button primary disabled" aria-current="true">ENG</a></li>
+							<li><a href="/fr" class="button">FR</a></li>
+						</ul>
+					</section>
+				</section>
+			</footer>
 
-  // Try to play when ready
-  video.addEventListener('canplay', () => {
-    video.play().catch(err => console.log('Autoplay prevented:', err));
-  });
+			<!-- Copyright -->
+			<div id="copyright">
+				<ul>
+					<li>&copy; Guerra&amp;Bento</li>
+				</ul>
+			</div>
 
-  // Fallback for mobile Safari
-  document.addEventListener('DOMContentLoaded', () => {
-    video.play().catch(err => console.log('Autoplay prevented:', err));
-  });
-</script>
-	 <div id="lightbox">   <span class="close">&times;</span>   <img id="lightbox-img" src="" alt="">   <video id="lightbox-video" controls>     <source src="" type="video/mp4">     Your browser does not support the video tag.   </video> </div>  	</body>
+		</div>
+
+	</body>
 </html>
