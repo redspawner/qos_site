@@ -1,32 +1,31 @@
-@import url(font-awesome.min.css);
+/*
+	Quinta Outeiro da Serva — only loaded when the visitor's browser has JavaScript switched off.
+	Without the script there is no opening animation and no slide-in menu, so:
+*/
 
-
-
-/* Wrapper */
-
-	#wrapper {
-		background-color: #212931;
-		background-image: url("../../images/overlay.png"), linear-gradient(0deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url("../../images/bg.jpg");
-		background-size: auto,								auto,														100% auto;
-		background-position: center,								center,														top center;
-		background-repeat: repeat,								no-repeat,													no-repeat;
-		background-attachment: fixed,								fixed,														fixed;
-	}
-
-		#wrapper.fade-in:before {
-			display: none;
-		}
-
-/* Intro */
+/* 1. show the logo screen straight away */
 
 	body.is-preload #intro {
-		opacity: 1;
+		opacity: 1 !important;
+		transform: none !important;
+		animation: none !important;
 	}
 
-		body.is-preload #intro:not(.hidden) + #header + #nav {
-			-moz-transform: none;
-			-webkit-transform: none;
-			-ms-transform: none;
-			transform: none;
-			opacity: 1;
+	body.landing #wrapper:before {
+		display: none !important;
+	}
+
+/* 2. on tablets and phones, show the menu as a plain bar of links */
+
+	@media screen and (max-width: 980px) {
+
+		#nav {
+			visibility: visible;
+			height: auto;
+			width: 100%;
+			margin: 0;
+			padding: 0;
+			overflow-x: auto;
 		}
+
+	}

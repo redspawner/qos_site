@@ -1,61 +1,59 @@
-<!DOCTYPE HTML>
-<html>
-					<footer id="footer">
-						<section>
-							<form method="POST" action="/stocking">
-							<div class="fields">
-								<div class="field">
-								<label for="name">Tipo de Vinho</label>
-								<input type="text" name="name" pattern="^[1-5]|99$" title="Escolha um número permitido" required>
-								</div>
-								<div class="field">
-								<label for="email">Pass</label>
-								<input type="text" name="email" id="email" required>
-								</div>
-								<div class="field">
-								<label for="message">Mensagem</label>
-								<input type="number" name="message" min="1" max="9999" title="Insira um número de 1 a 999" required>
-								</div>
-							<label>Tipo de Registo:</label>
-							<select name="operacao" required>
-							  <option value="" disabled selected>Escolha uma opção...</option>
-							  <option value="consumo">Consumo</option>
-							  <option value="vendas">Vendas</option>
-							</select>
-							</div>
-							<ul class="actions">
-								<li><input type="submit" value="Enviar Mensagem" /></li>
-							</ul>
+<!DOCTYPE html>
+<html lang="pt">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Registo de stock</title>
+		<meta name="robots" content="noindex">
+	</head>
+	<body>
 
-							</form>
-						</section>		
-					</footer>
-
-					<div id="copyright">
-<ul><li>Codigos Vinho:</li>
-<li>Vinho Tinto Duas Castas 2024: 1</li>
-<li>Vinho Tinto Reserva Monocasta 2024: 2</li>
-<li>Vinho Tinto Duas Castas Reserva 2024: 3</li>
-<li>Vinho Tinto Três Castas 2025: 4</li>
-<li>Vinho Branco Monocasta 2025: 5</li>
-<ul><li>Codigos Outros:</li>
-<li>Bagaceira: 99</li>
-
-
-
-	
-	
-</ul>
+		<!-- Internal page: records stock movements in the "Stock" sheet (handled by /stocking in server.js).
+		     Note: the field names look swapped on purpose; server.js expects them exactly like this. -->
+		<footer id="footer">
+			<section>
+				<form method="POST" action="/stocking">
+					<div class="fields">
+						<div class="field">
+							<label for="name">Tipo de Vinho</label>
+							<input type="text" name="name" id="name" inputmode="numeric" pattern="[1-5]|99" title="Escolha um número permitido" required>
+						</div>
+						<div class="field">
+							<label for="email">Pass</label>
+							<input type="text" name="email" id="email" required>
+						</div>
+						<div class="field">
+							<label for="message">Mensagem</label>
+							<input type="number" name="message" id="message" min="1" max="9999" title="Insira um número de 1 a 9999" required>
+						</div>
+						<label for="operacao">Tipo de Registo:</label>
+						<select name="operacao" id="operacao" required>
+							<option value="" disabled selected>Escolha uma opção...</option>
+							<option value="consumo">Consumo</option>
+							<option value="vendas">Vendas</option>
+						</select>
 					</div>
+					<ul class="actions">
+						<li><input type="submit" value="Enviar Mensagem"></li>
+					</ul>
+				</form>
+			</section>
+		</footer>
 
-		<!-- Scripts -->
-<script src="/assets/js/jquery.min.js"></script>
-<script src="/assets/js/jquery.scrollex.min.js"></script>
-<script src="/assets/js/jquery.scrolly.min.js"></script>
-<script src="/assets/js/browser.min.js"></script>
-<script src="/assets/js/breakpoints.min.js"></script>
-<script src="/assets/js/util.js"></script>
-<script src="/assets/js/main.js"></script>
+		<div id="copyright">
+			<ul>
+				<li>Codigos Vinho:</li>
+				<li>Vinho Tinto Duas Castas 2024: 1</li>
+				<li>Vinho Tinto Reserva Monocasta 2024: 2</li>
+				<li>Vinho Tinto Duas Castas Reserva 2024: 3</li>
+				<li>Vinho Tinto Três Castas 2025: 4</li>
+				<li>Vinho Branco Monocasta 2025: 5</li>
+			</ul>
+			<ul>
+				<li>Codigos Outros:</li>
+				<li>Bagaceira: 99</li>
+			</ul>
+		</div>
 
 	</body>
 </html>

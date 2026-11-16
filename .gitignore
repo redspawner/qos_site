@@ -1,0 +1,11 @@
+# Installed automatically by "npm install" (and by Railway on every deploy): never commit it.
+node_modules/
+
+# Local secrets (the real values live in the Railway "Variables" tab).
+.env
+.env.*
+
+# Computer clutter
+.DS_Store
+Thumbs.db
+npm-debug.log*

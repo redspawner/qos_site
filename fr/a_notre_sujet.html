@@ -1,201 +1,150 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="fr">
 	<head>
-		<link rel="preload" href="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/bk.mp4" as="video">
-		
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>À notre sujet - Quinta Outeiro da Serva</title>
+		<meta name="description" content="Découvrez nos vins, huile d'olive et produits locaux. Tradition et saveur de Monte Real, Portugal.">
+		<link rel="canonical" href="https://quintaouteirodaserva.com/fr/a_notre_sujet">
+		<link rel="alternate" hreflang="pt" href="https://quintaouteirodaserva.com/pt/sobre_nos">
+		<link rel="alternate" hreflang="en" href="https://quintaouteirodaserva.com/eng/about_us">
+		<link rel="alternate" hreflang="fr" href="https://quintaouteirodaserva.com/fr/a_notre_sujet">
+		<link rel="alternate" hreflang="x-default" href="https://quintaouteirodaserva.com/pt/sobre_nos">
 
-<!-- optionally: noscript fallback to the static image -->
-<noscript>
-  <div class="bg-image-fallback"></div>
-</noscript>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="../assets/css/main_T.css" />
-		<noscript><link rel="stylesheet" href="/assets/css/noscript.css" /></noscript>
+		<!-- Preview shown when the page is shared (WhatsApp, Facebook, ...) -->
+		<meta property="og:type" content="website">
+		<meta property="og:site_name" content="Quinta Outeiro da Serva">
+		<meta property="og:title" content="À notre sujet - Quinta Outeiro da Serva">
+		<meta property="og:description" content="Découvrez nos vins, huile d'olive et produits locaux. Tradition et saveur de Monte Real, Portugal.">
+		<meta property="og:url" content="https://quintaouteirodaserva.com/fr/a_notre_sujet">
+		<meta property="og:image" content="https://quintaouteirodaserva.com/images/og-image.jpg">
+		<meta name="twitter:card" content="summary_large_image">
+
 		<link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
-        <link rel="alternate icon" href="/images/favicon.png" type="image/x-png">
+		<link rel="alternate icon" href="/images/favicon.png" type="image/png">
 
+		<!-- Speed: fetch the first background photo and the menu font straight away -->
+		<link rel="preload" as="image" href="/images/bg/01-wide.webp" media="(orientation: landscape)">
+		<link rel="preload" as="image" href="/images/bg/01-tall.webp" media="(orientation: portrait)">
+		<link rel="preload" as="font" type="font/woff2" href="/assets/fonts/source-sans-pro-900.woff2" crossorigin>
 
-		<!-- Primary Meta Tags -->
-<title>Quinta Outeiro da Serva</title>
-<meta name="title" content="Quinta Outeiro da Serva">
-<meta name="description" content="Découvrez nos vins, huile d'olive et produits locaux. Tradition et saveur de Monte Real, Portugal.">
-
-<!-- Open Graph / WhatsApp / Facebook -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://quintaouteirodaserva.com/fr">
-<meta property="og:title" content="Quinta Outeiro da Serva">
-<meta property="og:description" content="Découvrez nos vins, huile d'olive et produits locaux. Tradition et saveur de Monte Real, Portugal.">
-<meta property="og:image" content="https://quintaouteirodaserva.com/images/favicon.png">
-
-<!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="https://quintaouteirodaserva.com/fr">
-<meta property="twitter:title" content="Quinta Outeiro da Serva">
-<meta property="twitter:description" content="Découvrez nos vins, huile d'olive et produits locaux. Tradition et saveur de Monte Real, Portugal.">
-<meta property="twitter:image" content="https://quintaouteirodaserva.com/images/favicon.png">
+		<link rel="stylesheet" href="/assets/css/main.css">
+		<noscript><link rel="stylesheet" href="/assets/css/noscript.css"></noscript>
+		<script src="/assets/js/main.js" defer></script>
 	</head>
 	<body class="is-preload">
-		<video id="bg-video" autoplay muted loop playsinline preload="auto" poster="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/bk.jpg">
-  <!-- include both webm & mp4 for best browser coverage -->
-  <source src="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/bk.mp4" type="video/mp4">
-  <!-- Fallback content for very old browsers -->
-  Your browser does not support the video tag.
-</video>
+
+		<!-- Background: photo slideshow (the list of photos is at the top of /assets/js/main.js) -->
+		<div id="bg"></div>
 
 		<!-- Wrapper -->
-			<div id="wrapper" class="fade-in">
+		<div id="wrapper">
 
-    <!-- Video background -->
-    <div class="bg fixed">
-        <video id="bg-video" autoplay muted loop playsinline>
-            <source src="../https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/bk.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-        <!-- Optional overlay -->
-        <div class="overlay"></div>
-    </div>
+			<!-- Intro: the logo screen -->
+			<div id="intro">
+				<img class="fixed-logo" src="/images/logo_w.svg" alt="Quinta Outeiro da Serva" width="1288" height="750">
+				<ul class="actions">
+					<li><a href="#nav" class="button icon solid solo fa-arrow-down scrolly" aria-label="Continuer"></a></li>
+				</ul>
+			</div>
 
-				<!-- Intro -->
-				<div id="intro">
-					<img class="fixed-logo" src="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/logo_w.svg" alt="Quinta Outeiro da Serva" />
-					<ul class="actions">
-						<li><a href="#nav" class="button icon solid solo fa-arrow-down scrolly"></a></li>
-					</ul>
-				</div>
+			<!-- Nav: the menu (on tablets and phones the script turns these links into the slide-in menu) -->
+			<nav id="nav">
+				<ul class="links">
+					<li><a href="/fr/vinification#nav">Vinification</a></li>
+					<li><a href="/fr/oenotourisme#nav">L'œnotourisme</a></li>
+					<li class="active"><a href="/fr/a_notre_sujet#nav">À notre sujet</a></li>
+					<li><a href="/fr/galerie#nav">Galerie</a></li>
+				</ul>
+				<ul class="icons">
+					<li><a href="/fr/out_facebook" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
+					<li><a href="/fr/out_instagram" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
+				</ul>
+			</nav>
 
+			<!-- Main: the content of this page -->
+			<div id="main">
 
+				<!-- Post -->
 
+				<section class="post">
+					<header class="major">
+						<h1>À notre sujet</h1>
 					</header>
-
-				<!-- Nav -->
-					<nav id="nav">
-						<ul class="links">
-							<li><a href="/fr/vinification#nav">Vinification</a></li>
-							<li><a href="/fr/oenotourisme#nav">L'œnotourisme</a></li>
-							<li class="active"><a href="/fr/a_notre_sujet#nav">À notre sujet</a></li>						
-							<li><a href="/fr/galerie#nav">Galerie</a></li>
-
-						</ul>
-						<ul class="icons">
-							<li><a href="/fr/out_facebook" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-							<li><a href="/fr/out_instagram" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-						</ul>
-					</nav>
-
-				<!-- Main -->
-					<div id="main">
-
-						<!-- Post -->
-							<section class="post">
-								<header class="major">
-
-									<h1>À notre sujet</h1>
-									</header>
-								<div class="image main"><img src="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/about_H.jpg" alt="" /></div>
-																<header class="major">
-
-								<p>À la <b>Quinta Outeiro da Serva</b>, tradition et innovation vont de pair. Situé dans le village pittoresque de Monte Real, ce domaine est un témoignage vivant de notre engagement en faveur de la qualité et de l'authenticité. Des vignes soigneusement entretenues à la vinification artisanale, chaque bouteille que nous produisons est une célébration de notre héritage familial et de notre passion pour la vinification.</p>	
-
-
-
-
-								
-									</header>
-<p><span class="image left"><img src="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/about_1.jpg" alt="" /></span> Notre quinta est plus qu'un simple lieu de production de vin. C'est un lieu où la nature et l'homme se rencontrent en harmonie. Nos vignobles sont plantés avec le plus grand soin et chaque récolte est effectuée à la main, ce qui garantit que seuls les raisins les plus appropriés sont sélectionnés pour la production de nos vins. Nous apprécions la tradition, mais aussi la modernisation, et nous appliquons ces connaissances pour améliorer et amplifier l'art déjà connu et éprouvé par le passé.<br />
-
-		<p>Nous sommes une équipe et nous remercions <a href="/fr/remerciements#nav">tous ceux</a> qui contribuent au développement de ce projet.<br/> Nous vous remercions également et vous invitons à découvrir la magie de la <b> Quinta Outeiro da Serva</b>, où chaque bouteille raconte une histoire et où chaque gorgée est un voyage au cœur de notre tradition viticole.</p>
-<article class="post featured">
-								<header class="major">
-																	
-							<b>	Rejoignez-nous et découvrez la saveur authentique de nos vins, élaborés avec amour et dévouement.</p>
-									</header>
-									</article>
-															
-
-					</div>
-<ul>
-						
-									</ul>
-				<!-- Footer -->
-					<footer id="footer">
-						<section>
-							<form method="POST" action="/submit-form">
-							<input type="hidden" name="lang" value="fr" />
-							<div class="fields">
-								<div class="field">
-								<label for="name">Nom</label>
-								<input type="text" name="name" id="name" required />
-								</div>
-								<div class="field">
-								<label for="email">Email</label>
-								<input type="email" name="email" id="email" required />
-								</div>
-								<div class="field">
-								<label for="message">Message</label>
-								<textarea name="message" id="message" rows="3" required></textarea>
-								</div>
-							</div>
-							<ul class="actions">
-								<li><input type="submit" value="envoyer le message" /></li>
-							</ul>
-							</form>
-						</section>
-						<section class="split contact">
-							<section class="alt">
-								<h3>Adresse:</h3>
-								<p>Tv. B dos Arrabaldes, Monte Real <br />
-								2425-019, Leiria, Portugal</p>
-							</section>
-							<section>
-								<h3>Téléphone:</h3>
-								<p><a>+351 918 644 690 or +351 916 288 328</a></p> 
-							</section>
-							<section>
-								<h3>Email:</h3>
-								<p><a>quintaouteirodaserva@gmail.com</a></p>
-							</section>
-							<section>
-								<h3>Langue:</h3>
-								<ul class="icons alt">
-									<li><a href="../" class="button" >PT</a></li>
-									<li><a href="/eng" class="button">ENG</a></li>
-									<li><a href="/fr" class="button primary disabled">FR</a></li>
-								</ul>
-							</section>
-						</section>
-					</footer>
-
-				<!-- Copyright -->
-					<div id="copyright">
-<ul><li>&copy; Guerra&Bento</li><li></a></li></ul>
-					</div>
+					<div class="image main"><img src="/images/about_H.webp" alt="Deux personnes en chapeau de paille au domaine" width="1400" height="933" loading="lazy" decoding="async"></div>
+					<header class="major">
+						<p>À la <b>Quinta Outeiro da Serva</b>, tradition et innovation vont de pair. Situé dans le village pittoresque de Monte Real, ce domaine est un témoignage vivant de notre engagement en faveur de la qualité et de l'authenticité. Des vignes soigneusement entretenues à la vinification artisanale, chaque bouteille que nous produisons est une célébration de notre héritage familial et de notre passion pour la vinification.</p>
+					</header>
+					<p><span class="image left"><img src="/images/about_1.webp" alt="Fer à cheval sur un mur de pierre" width="900" height="1350" loading="lazy" decoding="async"></span> Notre quinta est plus qu'un simple lieu de production de vin. C'est un lieu où la nature et l'homme se rencontrent en harmonie. Nos vignobles sont plantés avec le plus grand soin et chaque récolte est effectuée à la main, ce qui garantit que seuls les raisins les plus appropriés sont sélectionnés pour la production de nos vins. Nous apprécions la tradition, mais aussi la modernisation, et nous appliquons ces connaissances pour améliorer et amplifier l'art déjà connu et éprouvé par le passé.<br /></p>
+					<p>Nous sommes une équipe et nous remercions <a href="/fr/remerciements#nav">tous ceux</a> qui contribuent au développement de ce projet.<br />
+						Nous vous remercions également et vous invitons à découvrir la magie de la <b> Quinta Outeiro da Serva</b>, où chaque bouteille raconte une histoire et où chaque gorgée est un voyage au cœur de notre tradition viticole.</p>
+					<article class="post featured">
+						<header class="major">
+							<b> Rejoignez-nous et découvrez la saveur authentique de nos vins, élaborés avec amour et dévouement.</b>
+							<p></p>
+						</header>
+					</article>
+				</section>
 
 			</div>
 
-		<!-- Scripts -->
-			<script src="../assets/js/jquery.min.js"></script>
-			<script src="../assets/js/jquery.scrollex.min.js"></script>
-			<script src="../assets/js/jquery.scrolly.min.js"></script>
-			<script src="../assets/js/browser.min.js"></script>
-			<script src="../assets/js/breakpoints.min.js"></script>
-			<script src="../assets/js/util.js"></script>
-			<script src="../assets/js/main.js"></script>
-<script>
-  const video = document.getElementById('bg-video');
+			<!-- Footer: contact form and contacts -->
+			<footer id="footer">
+				<section>
+					<form method="POST" action="/submit-form">
+						<input type="hidden" name="lang" value="fr">
+						<div class="fields">
+							<div class="field">
+								<label for="name">Nom</label>
+								<input type="text" name="name" id="name" autocomplete="name" required>
+							</div>
+							<div class="field">
+								<label for="email">Email</label>
+								<input type="email" name="email" id="email" autocomplete="email" required>
+							</div>
+							<div class="field">
+								<label for="message">Message</label>
+								<textarea name="message" id="message" rows="3" required></textarea>
+							</div>
+						</div>
+						<ul class="actions">
+							<li><input type="submit" value="envoyer le message"></li>
+						</ul>
+					</form>
+				</section>
+				<section class="split contact">
+					<section class="alt">
+						<h3>Adresse:</h3>
+						<p>Tv. B dos Arrabaldes, Monte Real <br />
+						2425-019, Leiria, Portugal</p>
+					</section>
+					<section>
+						<h3>Téléphone:</h3>
+						<p><a href="tel:+351918644690">+351 918 644 690</a> ou <a href="tel:+351916288328">+351 916 288 328</a></p>
+					</section>
+					<section>
+						<h3>Email:</h3>
+						<p><a href="mailto:quintaouteirodaserva@gmail.com">quintaouteirodaserva@gmail.com</a></p>
+					</section>
+					<section>
+						<h3>Langue:</h3>
+						<ul class="icons alt">
+							<li><a href="/" class="button">PT</a></li>
+							<li><a href="/eng" class="button">ENG</a></li>
+							<li><a class="button primary disabled" aria-current="true">FR</a></li>
+						</ul>
+					</section>
+				</section>
+			</footer>
 
-  // Force load and play
-  video.load();
+			<!-- Copyright -->
+			<div id="copyright">
+				<ul>
+					<li>&copy; Guerra&amp;Bento</li>
+				</ul>
+			</div>
 
-  // Try to play when ready
-  video.addEventListener('canplay', () => {
-    video.play().catch(err => console.log('Autoplay prevented:', err));
-  });
+		</div>
 
-  // Fallback for mobile Safari
-  document.addEventListener('DOMContentLoaded', () => {
-    video.play().catch(err => console.log('Autoplay prevented:', err));
-  });
-</script>
 	</body>
 </html>

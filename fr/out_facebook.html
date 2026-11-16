@@ -1,67 +1,47 @@
-<!DOCTYPE HTML>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <link rel="stylesheet" href="../assets/css/main.css" />
-  <noscript><link rel="stylesheet" href="/assets/css/noscript.css" /></noscript>
+<!DOCTYPE html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Quinta Outeiro da Serva</title>
+		<meta name="robots" content="noindex">
+
 		<link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
-        <link rel="alternate icon" href="/images/favicon.png" type="image/x-png">
+		<link rel="alternate icon" href="/images/favicon.png" type="image/png">
 
+		<!-- Speed: fetch the fonts of this screen straight away -->
+		<link rel="preload" as="font" type="font/woff2" href="/assets/fonts/source-sans-pro-900.woff2" crossorigin>
+		<link rel="preload" as="font" type="font/woff2" href="/assets/fonts/merriweather-300-italic.woff2" crossorigin>
 
-		<!-- Primary Meta Tags -->
-<title>Quinta Outeiro da Serva</title>
-<meta name="title" content="Quinta Outeiro da Serva">
-<meta name="description" content="Découvrez nos vins, huile d'olive et produits locaux. Tradition et saveur de Monte Real, Portugal.">
+		<link rel="stylesheet" href="/assets/css/main.css">
+		<noscript><link rel="stylesheet" href="/assets/css/noscript.css"></noscript>
+		<script src="/assets/js/main.js" defer></script>
+	</head>
+	<body class="is-preload landing">
 
-<!-- Open Graph / WhatsApp / Facebook -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://quintaouteirodaserva.com/fr">
-<meta property="og:title" content="Quinta Outeiro da Serva">
-<meta property="og:description" content="Découvrez nos vins, huile d'olive et produits locaux. Tradition et saveur de Monte Real, Portugal.">
-<meta property="og:image" content="https://quintaouteirodaserva.com/images/favicon.png">
+		<!-- Background (dark image: see "8." in assets/css/main.css) -->
+		<div id="bg"></div>
 
-<!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image">
-<meta property="twitter:url" content="https://quintaouteirodaserva.com/fr">
-<meta property="twitter:title" content="Quinta Outeiro da Serva">
-<meta property="twitter:description" content="Découvrez nos vins, huile d'olive et produits locaux. Tradition et saveur de Monte Real, Portugal.">
-<meta property="twitter:image" content="https://quintaouteirodaserva.com/images/favicon.png">
-</head>
+		<!-- Wrapper -->
+		<div id="wrapper">
 
-<body class="is-preload">
+			<!-- Intro -->
+			<div id="intro">
+				<img src="/images/logo_ww.svg" alt="Quinta Outeiro da Serva" width="1056" height="336">
+				<p id="message" style="display: none;">Merci de votre visite, de votre redirection...</p>
+			</div>
 
-  <div id="wrapper" class="fade-in">
-    <div id="intro">
-     <img src="https://pub-885ad7caf38a4827bdcfb2d62f41591c.r2.dev/logo_ww.svg" alt="Quinta Outeiro da Serva" />
-      <p id="message" style="display: none;">Merci de votre visite, de votre redirection...</p>
-    </div>
-  </div>
+		</div>
 
-  <script>
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    async function waitAndRedirect() {
-      console.log("Waiting 3 seconds...");
-      document.getElementById("message").style.display = "block";
-      await sleep(3000);
-      window.location.href = "https://www.facebook.com/profile.php?id=61577102181991";
-    }
-
-    window.onload = waitAndRedirect;
-  </script>
-		<!-- Scripts -->
-			<script src="../assets/js/break.js"></script>
-			<script src="../assets/js/jquery.min.js"></script>
-			<script src="../assets/js/jquery.scrollex.min.js"></script>
-			<script src="../assets/js/jquery.scrolly.min.js"></script>
-			<script src="../assets/js/browser.min.js"></script>
-			<script src="../assets/js/breakpoints.min.js"></script>
-			<script src="../assets/js/util.js"></script>
-			<script src="../assets/js/main_3.js"></script>
-			
+		<script>
+			// Leaving the site: display the message, wait 3 seconds, then go to the address below.
+			window.addEventListener('load', function () {
+				document.getElementById('message').style.display = 'block';
+				window.setTimeout(function () {
+					window.location.href = 'https://www.facebook.com/profile.php?id=61577102181991';
+				}, 3000);
+			});
+		</script>
 
 	</body>
 </html>

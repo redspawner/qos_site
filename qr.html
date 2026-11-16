@@ -1,46 +1,47 @@
-<!DOCTYPE HTML>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="assets/css/main.css" />
-		<noscript><link rel="stylesheet" href="/assets/css/noscript.css" /></noscript>
-		     	<link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
-        <link rel="alternate icon" href="/images/favicon.png" type="image/x-png">
+<!DOCTYPE html>
+<html lang="pt">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Quinta Outeiro da Serva</title>
+		<meta name="robots" content="noindex">
 
-<body class="is-preload">
+		<link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
+		<link rel="alternate icon" href="/images/favicon.png" type="image/png">
 
-  <div id="wrapper" class="fade-in">
-    <div id="intro">
-     <img src="images/logo_ww.svg" alt="Quinta Outeiro da Serva" />
-      <p id="message" style="display: none;">A redirecionar...</p>
-    </div>
-  </div>
+		<!-- Speed: fetch the fonts of this screen straight away -->
+		<link rel="preload" as="font" type="font/woff2" href="/assets/fonts/source-sans-pro-900.woff2" crossorigin>
+		<link rel="preload" as="font" type="font/woff2" href="/assets/fonts/merriweather-300-italic.woff2" crossorigin>
 
-  <script>
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
+		<link rel="stylesheet" href="/assets/css/main.css">
+		<noscript><link rel="stylesheet" href="/assets/css/noscript.css"></noscript>
+		<script src="/assets/js/main.js" defer></script>
+	</head>
+	<body class="is-preload landing">
 
-    async function waitAndRedirect() {
-      console.log("Waiting 3 seconds...");
-      document.getElementById("message").style.display = "block";
-      await sleep(3000);
-      window.location.href = "/"; // Redireciona para a página principal
-    }
+		<!-- Background (dark image: see "8." in assets/css/main.css) -->
+		<div id="bg"></div>
 
-    window.onload = waitAndRedirect;
-  </script>
-		<!-- Scripts -->
-		<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/jquery.scrollex.min.js"></script>
-			<script src="assets/js/jquery.scrolly.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main_3.js"></script>
+		<!-- Wrapper -->
+		<div id="wrapper">
 
-			
+			<!-- Intro -->
+			<div id="intro">
+				<img src="/images/logo_ww.svg" alt="Quinta Outeiro da Serva" width="1056" height="336">
+				<p id="message" style="display: none;">A redirecionar...</p>
+			</div>
+
+		</div>
+
+		<script>
+			// Page opened by the QR code: display the message, wait 3 seconds, go to the home page.
+			window.addEventListener('load', function () {
+				document.getElementById('message').style.display = 'block';
+				window.setTimeout(function () {
+					window.location.href = '/';
+				}, 3000);
+			});
+		</script>
 
 	</body>
 </html>
