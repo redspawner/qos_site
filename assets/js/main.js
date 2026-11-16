@@ -22,11 +22,13 @@
 	// Background photos, in the order they are shown.
 	// Each name needs two files in /images/slides/ :
 	//   NAME-tall.webp  (1080 x 1920, upright)   used on phones / upright screens
-	//   NAME-wide.webp  (1620 x 1080, landscape)  used on computers / wide screens
+	//   NAME-wide.webp  (1920 x 1280, landscape)  used on computers / wide screens
 	// To add a photo: put both files in that folder and add its name to this list.
 	// To change the very first photo, also update the two "bg/01-..." names in
-	// assets/css/main.css (section "1. Background") and in the <head> of the pages.
-	var SLIDES = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'];
+	// assets/css/main.css (section "1. Background") and in the <head> of the pages
+	// (they currently say "grapes-wide" and "grapes-tall").
+	var SLIDES = ['grapes', 'picnic', 'shade-table', 'horseshoe', 'roses', 'red-wine',
+	              'maria-gomes', 'white-wine', 'toast', 'oak-table', 'reading'];
 
 	var SLIDE_HOLD = 3000;   // how long each photo stays fully visible (milliseconds)
 	var SLIDE_FADE = 1000;   // how long the crossfade to the next photo takes (milliseconds)

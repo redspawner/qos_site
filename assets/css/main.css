@@ -3182,13 +3182,13 @@ body.is-preload #intro {
 		z-index: -1;
 		overflow: hidden;
 		pointer-events: none;
-		background: #1e252d url("../../images/slides/01-wide.webp") center / cover no-repeat;
+		background: #1e252d url("../../images/slides/grapes-wide.webp") center / cover no-repeat;
 	}
 
 	@media (orientation: portrait) {
 
 		#bg {
-			background-image: url("../../images/slides/01-tall.webp");
+			background-image: url("../../images/slides/grapes-tall.webp");
 		}
 
 	}
