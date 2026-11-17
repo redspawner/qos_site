@@ -27,7 +27,7 @@
 	// To change the very first photo, also update the two "bg/01-..." names in
 	// assets/css/main.css (section "1. Background") and in the <head> of the pages
 	// (they currently say "grapes-wide" and "grapes-tall").
-	var SLIDES = ['grapes', 'picnic', 'shade-table', 'horseshoe', 'roses', 'harvest',
+	var SLIDES = ['grapes', 'hats', 'shade-table', 'horseshoe', 'roses', 'harvest',
 	              'maria-gomes', 'olives', 'toast', 'oak-table', 'reading'];
 
 	var SLIDE_HOLD = 3000;   // how long each photo stays fully visible (milliseconds)
