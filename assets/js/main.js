@@ -28,7 +28,7 @@
 	// assets/css/main.css (section "1. Background") and in the <head> of the pages
 	// (they currently say "grapes-wide" and "grapes-tall").
 	var SLIDES = ['grapes', 'picnic', 'shade-table', 'horseshoe', 'roses', 'harvest',
-	              'maria-gomes', 'wine-press', 'toast', 'oak-table', 'reading'];
+	              'maria-gomes', 'olives', 'toast', 'oak-table', 'reading'];
 
 	var SLIDE_HOLD = 3000;   // how long each photo stays fully visible (milliseconds)
 	var SLIDE_FADE = 1000;   // how long the crossfade to the next photo takes (milliseconds)
